@@ -6,6 +6,7 @@ use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\DailyReportItemController;
 use App\Http\Controllers\EquipmentController;
 use App\Http\Controllers\MaintenanceHistoryController;
+use App\Http\Controllers\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,6 +18,7 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
+
 /*
 |--------------------------------------------------------------------------
 | Dashboard
@@ -25,11 +27,13 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get(
+        '/dashboard',
+        [DashboardController::class, 'index']
+    )->name('dashboard');
 
 });
+
 
 /*
 |--------------------------------------------------------------------------
@@ -61,34 +65,10 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::resource('daily-reports', DailyReportController::class);
-
-    Route::resource('equipment',EquipmentController::class);
-    /*
-|--------------------------------------------------------------------------
-| Maintenance History
-|--------------------------------------------------------------------------
-*/
-
-Route::post(
-    'equipment/{equipment}/maintenance-history',
-    [MaintenanceHistoryController::class, 'store']
-)->name('equipment.maintenance-history.store');
-
-Route::get(
-    'equipment/{equipment}/maintenance-history/{history}/edit',
-    [MaintenanceHistoryController::class, 'edit']
-)->name('equipment.maintenance-history.edit');
-
-Route::put(
-    'equipment/{equipment}/maintenance-history/{history}',
-    [MaintenanceHistoryController::class, 'update']
-)->name('equipment.maintenance-history.update');
-
-Route::delete(
-    'equipment/{equipment}/maintenance-history/{history}',
-    [MaintenanceHistoryController::class, 'destroy']
-)->name('equipment.maintenance-history.destroy');
+    Route::resource(
+        'daily-reports',
+        DailyReportController::class
+    );
 
 
     /*
@@ -98,19 +78,9 @@ Route::delete(
     */
 
     Route::post(
-        'daily-reports/{dailyReport}/submit',
-        [DailyReportController::class, 'submit']
-    )->name('daily-reports.submit');
-
-    Route::post(
-        'daily-reports/{dailyReport}/approve',
-        [DailyReportController::class, 'approve']
-    )->name('daily-reports.approve');
-
-    Route::post(
-        'daily-reports/{dailyReport}/reject',
-        [DailyReportController::class, 'reject']
-    )->name('daily-reports.reject');
+        'daily-reports/{dailyReport}/publish',
+        [DailyReportController::class, 'publish']
+    )->name('daily-reports.publish');
 
 
     /*
@@ -139,6 +109,46 @@ Route::delete(
         [DailyReportItemController::class, 'destroy']
     )->name('daily-reports.items.destroy');
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Equipment
+    |--------------------------------------------------------------------------
+    */
+
+    Route::resource(
+        'equipment',
+        EquipmentController::class
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Maintenance History
+    |--------------------------------------------------------------------------
+    */
+
+    Route::post(
+        'equipment/{equipment}/maintenance-history',
+        [MaintenanceHistoryController::class, 'store']
+    )->name('equipment.maintenance-history.store');
+
+    Route::get(
+        'equipment/{equipment}/maintenance-history/{history}/edit',
+        [MaintenanceHistoryController::class, 'edit']
+    )->name('equipment.maintenance-history.edit');
+
+    Route::put(
+        'equipment/{equipment}/maintenance-history/{history}',
+        [MaintenanceHistoryController::class, 'update']
+    )->name('equipment.maintenance-history.update');
+
+    Route::delete(
+        'equipment/{equipment}/maintenance-history/{history}',
+        [MaintenanceHistoryController::class, 'destroy']
+    )->name('equipment.maintenance-history.destroy');
+
 });
+
 
 require __DIR__.'/auth.php';

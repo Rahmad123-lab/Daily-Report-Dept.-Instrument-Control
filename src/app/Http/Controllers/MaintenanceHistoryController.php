@@ -6,7 +6,6 @@ use App\Models\Equipment;
 use App\Models\MaintenanceHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 
 class MaintenanceHistoryController extends Controller
 {
@@ -14,60 +13,63 @@ class MaintenanceHistoryController extends Controller
      * Store maintenance history
      */
     public function store(Request $request, Equipment $equipment)
-{
-    $validated = $request->validate([
+    {
+        $validated = $request->validate([
 
-        'maintenance_date' => [
-            'required',
-            'date',
-        ],
+            'maintenance_date' => [
+                'required',
+                'date',
+            ],
 
-        'maintenance_type' => [
-            'required',
-            'string',
-            'max:100',
-        ],
+            'maintenance_type' => [
+                'required',
+                'string',
+                'max:100',
+            ],
 
-        'performed_by' => [
-            'required',
-            'string',
-            'max:255',
-        ],
+            'technician' => [
+                'required',
+                'string',
+                'max:255',
+            ],
 
-        'work_order' => [
-            'nullable',
-            'string',
-            'max:100',
-        ],
+            'work_order_number' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
 
-        'result' => [
-            'nullable',
-            'string',
-            'max:255',
-        ],
+            'duration' => [
+                'nullable',
+                'integer',
+                'min:0',
+            ],
 
-        'cost' => [
-            'nullable',
-            'numeric',
-            'min:0',
-        ],
+            'result' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
 
-        'description' => [
-            'nullable',
-            'string',
-        ],
+            'notes' => [
+                'nullable',
+                'string',
+            ],
 
-    ]);
+        ]);
 
-    $equipment->maintenanceHistories()->create($validated);
+        $validated['created_by'] = Auth::id();
 
-    return redirect()
-        ->route('equipment.show', $equipment)
-        ->with(
-            'success',
-            'Maintenance history berhasil ditambahkan.'
-        );
-}
+        $equipment->maintenanceHistories()->create($validated);
+
+        return redirect()
+            ->route('equipment.show', $equipment)
+            ->with(
+                'success',
+                'Maintenance history berhasil ditambahkan.'
+            );
+    }
+
 
     /**
      * Edit form
@@ -85,62 +87,84 @@ class MaintenanceHistoryController extends Controller
         );
     }
 
+
     /**
      * Update maintenance history
      */
-   public function update(
-    Request $request,
-    Equipment $equipment,
-    MaintenanceHistory $history
-) {
+    public function update(
+        Request $request,
+        Equipment $equipment,
+        MaintenanceHistory $history
+    ) {
+        $validated = $request->validate([
 
-    $validated = $request->validate([
+            'maintenance_date' => [
+                'required',
+                'date',
+            ],
 
-        'maintenance_date'=>'required|date',
+            'maintenance_type' => [
+                'required',
+                'string',
+                'max:100',
+            ],
 
-        'maintenance_type'=>'required|string|max:100',
+            'technician' => [
+                'required',
+                'string',
+                'max:255',
+            ],
 
-        'performed_by'=>'required|string|max:255',
+            'work_order_number' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
 
-        'work_order'=>'nullable|string|max:100',
+            'duration' => [
+                'nullable',
+                'integer',
+                'min:0',
+            ],
 
-        'result'=>'nullable|string|max:255',
+            'result' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
 
-        'cost'=>'nullable|numeric|min:0',
+            'notes' => [
+                'nullable',
+                'string',
+            ],
 
-        'description'=>'nullable|string',
+        ]);
 
-    ]);
+        $history->update($validated);
 
-    $history->update($validated);
+        return redirect()
+            ->route('equipment.show', $equipment)
+            ->with(
+                'success',
+                'Maintenance history berhasil diperbarui.'
+            );
+    }
 
-    return redirect()
-
-        ->route('equipment.show',$equipment)
-
-        ->with(
-            'success',
-            'Maintenance history berhasil diperbarui.'
-        );
-}
 
     /**
      * Delete maintenance history
      */
-   public function destroy(
-    Equipment $equipment,
-    MaintenanceHistory $history
-) {
+    public function destroy(
+        Equipment $equipment,
+        MaintenanceHistory $history
+    ) {
+        $history->delete();
 
-    $history->delete();
-
-    return redirect()
-
-        ->route('equipment.show',$equipment)
-
-        ->with(
-            'success',
-            'Maintenance history berhasil dihapus.'
-        );
-}
+        return redirect()
+            ->route('equipment.show', $equipment)
+            ->with(
+                'success',
+                'Maintenance history berhasil dihapus.'
+            );
+    }
 }

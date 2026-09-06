@@ -130,45 +130,45 @@
 
                        <option value="">Select Category</option>
 
-<option value="Instrument" @selected(old('category')=='Instrument')>
-    Instrument
-</option>
+                    <option value="Instrument" @selected(old('category')=='Instrument')>
+                        Instrument
+                    </option>
 
-<option value="Valve" @selected(old('category')=='Valve')>
-    Valve
-</option>
+                    <option value="Valve" @selected(old('category')=='Valve')>
+                        Valve
+                    </option>
 
-<option value="Electrical" @selected(old('category')=='Electrical')>
-    Electrical
-</option>
+                    <option value="Electrical" @selected(old('category')=='Electrical')>
+                        Electrical
+                    </option>
 
-<option value="Analyzer" @selected(old('category')=='Analyzer')>
-    Analyzer
-</option>
+                    <option value="Analyzer" @selected(old('category')=='Analyzer')>
+                        Analyzer
+                    </option>
 
-<option value="PLC" @selected(old('category')=='PLC')>
-    PLC
-</option>
+                    <option value="PLC" @selected(old('category')=='PLC')>
+                        PLC
+                    </option>
 
-<option value="DCS" @selected(old('category')=='DCS')>
-    DCS
-</option>
+                    <option value="DCS" @selected(old('category')=='DCS')>
+                        DCS
+                    </option>
 
-<option value="Motor" @selected(old('category')=='Motor')>
-    Motor
-</option>
+                    <option value="Motor" @selected(old('category')=='Motor')>
+                        Motor
+                    </option>
 
-<option value="Pump" @selected(old('category')=='Pump')>
-    Pump
-</option>
+                    <option value="Pump" @selected(old('category')=='Pump')>
+                        Pump
+                    </option>
 
-<option value="Tank" @selected(old('category')=='Tank')>
-    Tank
-</option>
+                    <option value="Tank" @selected(old('category')=='Tank')>
+                        Tank
+                    </option>
 
-<option value="Utility" @selected(old('category')=='Utility')>
-    Utility
-</option>
+                    <option value="Utility" @selected(old('category')=='Utility')>
+                        Utility
+                    </option>
 
                     </select>
 
