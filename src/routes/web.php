@@ -1,16 +1,19 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\DailyReportItemController;
 use App\Http\Controllers\EquipmentController;
+use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\MaintenanceHistoryController;
-use App\Http\Controllers\DashboardController;
+
 
 /*
 |--------------------------------------------------------------------------
-| Public
+| Public Routes
 |--------------------------------------------------------------------------
 */
 
@@ -49,14 +52,32 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/profile', [ProfileController::class, 'edit'])
-        ->name('profile.edit');
+    Route::get(
+        '/profile',
+        [ProfileController::class, 'edit']
+    )->name('profile.edit');
 
-    Route::patch('/profile', [ProfileController::class, 'update'])
-        ->name('profile.update');
+    Route::patch(
+        '/profile',
+        [ProfileController::class, 'update']
+    )->name('profile.update');
 
-    Route::delete('/profile', [ProfileController::class, 'destroy'])
-        ->name('profile.destroy');
+    Route::delete(
+        '/profile',
+        [ProfileController::class, 'destroy']
+    )->name('profile.destroy');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Maintenance Dashboard
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/maintenance',
+        [MaintenanceController::class, 'index']
+    )->name('maintenance.index');
 
 
     /*
@@ -128,21 +149,31 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
 
+    // Create Maintenance
+    Route::get(
+        '/maintenance/create',
+        [MaintenanceHistoryController::class, 'create']
+    )->name('maintenance.create');
+
+    // Store Maintenance History
     Route::post(
         'equipment/{equipment}/maintenance-history',
         [MaintenanceHistoryController::class, 'store']
     )->name('equipment.maintenance-history.store');
 
+    // Edit Maintenance History
     Route::get(
         'equipment/{equipment}/maintenance-history/{history}/edit',
         [MaintenanceHistoryController::class, 'edit']
     )->name('equipment.maintenance-history.edit');
 
+    // Update Maintenance History
     Route::put(
         'equipment/{equipment}/maintenance-history/{history}',
         [MaintenanceHistoryController::class, 'update']
     )->name('equipment.maintenance-history.update');
 
+    // Delete Maintenance History
     Route::delete(
         'equipment/{equipment}/maintenance-history/{history}',
         [MaintenanceHistoryController::class, 'destroy']
@@ -150,5 +181,11 @@ Route::middleware('auth')->group(function () {
 
 });
 
+
+/*
+|--------------------------------------------------------------------------
+| Authentication Routes
+|--------------------------------------------------------------------------
+*/
 
 require __DIR__.'/auth.php';

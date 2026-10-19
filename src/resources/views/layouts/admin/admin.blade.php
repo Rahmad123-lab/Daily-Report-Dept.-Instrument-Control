@@ -29,7 +29,7 @@
                 </h1>
 
                 <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-                    DIGITAL RELIABILITY & INSTRUMENT
+                    DAILY REPORTS & INSTRUMENT
                     <br>
                     CONTROL SYSTEM
                 </p>
@@ -138,20 +138,22 @@
                 </a>
 
 
-                {{-- Maintenance --}}
-                <a href="#"
-                   class="flex items-center gap-3 px-4 py-3 rounded-xl
-                   text-slate-300 hover:bg-slate-800 transition">
+               {{-- Maintenance --}}
+<a href="{{ route('maintenance.index') }}"
+   class="flex items-center gap-3 px-4 py-3 rounded-xl transition
+   {{ request()->routeIs('maintenance.*')
+        ? 'bg-blue-600 text-white'
+        : 'text-slate-300 hover:bg-slate-800' }}">
 
-                    <span class="text-lg">
-                        🛠️
-                    </span>
+    <span class="text-lg">
+        🛠️
+    </span>
 
-                    <span class="font-medium">
-                        Maintenance
-                    </span>
+    <span class="font-medium">
+        Maintenance
+    </span>
 
-                </a>
+</a>
 
 
                 {{-- Training --}}

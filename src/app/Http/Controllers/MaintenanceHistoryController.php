@@ -6,16 +6,31 @@ use App\Models\Equipment;
 use App\Models\MaintenanceHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class MaintenanceHistoryController extends Controller
 {
     /**
-     * Store maintenance history
+     * Display the create maintenance history form.
+     */
+    public function create()
+    {
+        $equipment = Equipment::query()
+            ->orderBy('equipment_name')
+            ->get();
+
+        return view(
+            'maintenance-history.create',
+            compact('equipment')
+        );
+    }
+
+    /**
+     * Store a new maintenance history.
      */
     public function store(Request $request, Equipment $equipment)
     {
         $validated = $request->validate([
-
             'maintenance_date' => [
                 'required',
                 'date',
@@ -23,8 +38,22 @@ class MaintenanceHistoryController extends Controller
 
             'maintenance_type' => [
                 'required',
-                'string',
-                'max:100',
+                Rule::in([
+                    'Preventive',
+                    'Corrective',
+                    'Calibration',
+                    'Inspection',
+                    'Breakdown',
+                ]),
+            ],
+
+            'status' => [
+                'required',
+                Rule::in([
+                    'Open',
+                    'Progress',
+                    'Completed',
+                ]),
             ],
 
             'technician' => [
@@ -36,7 +65,7 @@ class MaintenanceHistoryController extends Controller
             'work_order_number' => [
                 'nullable',
                 'string',
-                'max:100',
+                'max:255',
             ],
 
             'duration' => [
@@ -47,17 +76,22 @@ class MaintenanceHistoryController extends Controller
 
             'result' => [
                 'nullable',
-                'string',
-                'max:255',
+                Rule::in([
+                    'Completed',
+                    'Pending',
+                    'Failed',
+                ]),
             ],
 
             'notes' => [
                 'nullable',
                 'string',
             ],
-
         ]);
 
+        // Normalize optional values to match database constraints.
+        $validated['duration'] = $validated['duration'] ?? 0;
+        $validated['result'] = $validated['result'] ?? 'Pending';
         $validated['created_by'] = Auth::id();
 
         $equipment->maintenanceHistories()->create($validated);
@@ -70,34 +104,32 @@ class MaintenanceHistoryController extends Controller
             );
     }
 
-
     /**
-     * Edit form
+     * Display the edit maintenance history form.
      */
     public function edit(
         Equipment $equipment,
         MaintenanceHistory $history
     ) {
+        $this->ensureHistoryBelongsToEquipment($equipment, $history);
+
         return view(
             'maintenance-history.edit',
-            compact(
-                'equipment',
-                'history'
-            )
+            compact('equipment', 'history')
         );
     }
 
-
     /**
-     * Update maintenance history
+     * Update an existing maintenance history.
      */
     public function update(
         Request $request,
         Equipment $equipment,
         MaintenanceHistory $history
     ) {
-        $validated = $request->validate([
+        $this->ensureHistoryBelongsToEquipment($equipment, $history);
 
+        $validated = $request->validate([
             'maintenance_date' => [
                 'required',
                 'date',
@@ -105,8 +137,22 @@ class MaintenanceHistoryController extends Controller
 
             'maintenance_type' => [
                 'required',
-                'string',
-                'max:100',
+                Rule::in([
+                    'Preventive',
+                    'Corrective',
+                    'Calibration',
+                    'Inspection',
+                    'Breakdown',
+                ]),
+            ],
+
+            'status' => [
+                'required',
+                Rule::in([
+                    'Open',
+                    'Progress',
+                    'Completed',
+                ]),
             ],
 
             'technician' => [
@@ -118,7 +164,7 @@ class MaintenanceHistoryController extends Controller
             'work_order_number' => [
                 'nullable',
                 'string',
-                'max:100',
+                'max:255',
             ],
 
             'duration' => [
@@ -129,16 +175,22 @@ class MaintenanceHistoryController extends Controller
 
             'result' => [
                 'nullable',
-                'string',
-                'max:255',
+                Rule::in([
+                    'Completed',
+                    'Pending',
+                    'Failed',
+                ]),
             ],
 
             'notes' => [
                 'nullable',
                 'string',
             ],
-
         ]);
+
+        // Prevent NULL values for fields with database defaults/constraints.
+        $validated['duration'] = $validated['duration'] ?? 0;
+        $validated['result'] = $validated['result'] ?? 'Pending';
 
         $history->update($validated);
 
@@ -150,14 +202,15 @@ class MaintenanceHistoryController extends Controller
             );
     }
 
-
     /**
-     * Delete maintenance history
+     * Delete a maintenance history.
      */
     public function destroy(
         Equipment $equipment,
         MaintenanceHistory $history
     ) {
+        $this->ensureHistoryBelongsToEquipment($equipment, $history);
+
         $history->delete();
 
         return redirect()
@@ -166,5 +219,18 @@ class MaintenanceHistoryController extends Controller
                 'success',
                 'Maintenance history berhasil dihapus.'
             );
+    }
+
+    /**
+     * Ensure the history belongs to the specified equipment.
+     */
+    private function ensureHistoryBelongsToEquipment(
+        Equipment $equipment,
+        MaintenanceHistory $history
+    ): void {
+        abort_unless(
+            (int) $history->equipment_id === (int) $equipment->id,
+            404
+        );
     }
 }

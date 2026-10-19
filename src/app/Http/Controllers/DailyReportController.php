@@ -374,15 +374,14 @@ class DailyReportController extends Controller
 
 
         $dailyReport->update([
-
-            'status' => 'Published',
-
+        'status' => 'Submitted',
+    
         ]);
 
 
         return back()->with(
             'success',
-            'Daily Report berhasil dipublish.'
+            'Daily Report berhasil disubmit.'
         );
     }
 }

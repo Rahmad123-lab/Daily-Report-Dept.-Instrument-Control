@@ -8,6 +8,9 @@ use App\Models\DailyReportItem;
 
 class DashboardController extends Controller
 {
+    /**
+     * Dashboard DRICS
+     */
     public function index()
     {
         /*
@@ -17,18 +20,6 @@ class DashboardController extends Controller
         */
 
         $totalEmployees = User::count();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Maintenance
-        |--------------------------------------------------------------------------
-        */
-
-        $activeMaintenance = DailyReportItem::whereIn('status', [
-            'Open',
-            'Progress',
-        ])->count();
 
 
         /*
@@ -52,7 +43,53 @@ class DashboardController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Maintenance Monitoring
+        | Active Maintenance
+        |--------------------------------------------------------------------------
+        |
+        | Activity dengan status Open atau Progress
+        |
+        */
+
+        $activeMaintenance = DailyReportItem::whereIn(
+            'status',
+            [
+                'Open',
+                'Progress',
+            ]
+        )->count();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Completed Maintenance
+        |--------------------------------------------------------------------------
+        */
+
+        $completedMaintenance = DailyReportItem::where(
+            'status',
+            'Done'
+        )->count();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Recent Daily Reports
+        |--------------------------------------------------------------------------
+        */
+
+        $recentReports = DailyReport::with([
+            'creator',
+            'items',
+        ])
+            ->latest('report_date')
+            ->latest('id')
+            ->take(5)
+            ->get();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Recent Maintenance Activities
         |--------------------------------------------------------------------------
         */
 
@@ -71,13 +108,18 @@ class DashboardController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        return view('dashboard', compact(
-            'totalEmployees',
-            'activeMaintenance',
-            'totalReports',
-            'draftReports',
-            'publishedReports',
-            'maintenanceItems'
-        ));
+        return view(
+            'dashboard',
+            compact(
+                'totalEmployees',
+                'totalReports',
+                'draftReports',
+                'publishedReports',
+                'activeMaintenance',
+                'completedMaintenance',
+                'recentReports',
+                'maintenanceItems'
+            )
+        );
     }
 }

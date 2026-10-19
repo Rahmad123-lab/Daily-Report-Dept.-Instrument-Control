@@ -4,55 +4,89 @@
 
 @section('content')
 
+@php
+    $statusBadge = match ($equipment->status) {
+        'Active' => 'bg-green-100 text-green-700',
+        'Standby' => 'bg-blue-100 text-blue-700',
+        'Maintenance' => 'bg-yellow-100 text-yellow-700',
+        'Breakdown' => 'bg-red-100 text-red-700',
+        'Decommission' => 'bg-slate-200 text-slate-700',
+        default => 'bg-slate-100 text-slate-700',
+    };
+@endphp
+
 <div class="max-w-6xl mx-auto space-y-6">
 
-    {{-- Success --}}
+    {{-- Flash Message --}}
     @if(session('success'))
-
         <div class="rounded-xl border border-green-200 bg-green-50 px-5 py-4 text-green-700">
-
             {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-red-700">
+            {{ session('error') }}
+        </div>
+    @endif
+
+
+    {{-- Validation Error --}}
+    @if($errors->any())
+        <div class="rounded-xl border border-red-200 bg-red-50 p-5">
+
+            <h3 class="font-semibold text-red-700 mb-3">
+                Please fix the following errors:
+            </h3>
+
+            <ul class="list-disc ml-5 text-sm text-red-600 space-y-1">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
 
         </div>
-
     @endif
 
 
     {{-- Header --}}
-    <div class="flex justify-between items-center">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
         <div>
+            <div class="flex flex-wrap items-center gap-3">
 
-            <h1 class="text-3xl font-bold text-slate-800">
+                <h1 class="text-3xl font-bold text-slate-800">
+                    {{ $equipment->equipment_name }}
+                </h1>
 
-                {{ $equipment->equipment_name }}
+                <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $statusBadge }}">
+                    {{ $equipment->status }}
+                </span>
 
-            </h1>
+            </div>
 
-            <p class="text-slate-500">
-
+            <p class="text-slate-500 mt-1">
+                {{ $equipment->equipment_code }}
+                ·
                 {{ $equipment->tag_number }}
-
             </p>
-
         </div>
 
-        <div class="flex gap-3">
+
+        <div class="flex flex-wrap gap-3">
 
             <a
                 href="{{ route('equipment.index') }}"
-                class="px-5 py-3 rounded-xl border bg-white hover:bg-slate-50">
-
-                Back
-
+                class="inline-flex items-center justify-center px-5 py-3 rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition"
+            >
+                ← Back
             </a>
 
             <a
-                href="{{ route('equipment.edit',$equipment) }}"
-                class="px-5 py-3 rounded-xl bg-yellow-500 text-white hover:bg-yellow-600">
-
-                Edit
-
+                href="{{ route('equipment.edit', $equipment) }}"
+                class="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-yellow-500 text-white hover:bg-yellow-600 transition"
+            >
+                Edit Equipment
             </a>
 
         </div>
@@ -61,185 +95,130 @@
 
 
     {{-- Equipment Information --}}
-    <div class="bg-white rounded-2xl border shadow-sm">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
-        <div class="p-6 border-b">
+        <div class="px-6 py-5 border-b border-slate-200">
 
-            <h2 class="text-xl font-semibold">
-
+            <h2 class="text-xl font-semibold text-slate-800">
                 Equipment Information
-
             </h2>
+
+            <p class="text-sm text-slate-500 mt-1">
+                Master data and technical information.
+            </p>
 
         </div>
 
-        <div class="grid md:grid-cols-2 gap-8 p-6">
 
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+
+            {{-- Equipment Code --}}
             <div>
-
-                <label class="text-slate-500 text-sm">
-
+                <p class="text-sm text-slate-500">
                     Equipment Code
+                </p>
 
-                </label>
-
-                <p class="font-semibold">
-
+                <p class="mt-1 font-semibold text-slate-800">
                     {{ $equipment->equipment_code }}
-
                 </p>
-
             </div>
 
+
+            {{-- Tag Number --}}
             <div>
-
-                <label class="text-slate-500 text-sm">
-
+                <p class="text-sm text-slate-500">
                     Tag Number
+                </p>
 
-                </label>
-
-                <p class="font-semibold">
-
+                <p class="mt-1 font-semibold text-slate-800">
                     {{ $equipment->tag_number }}
-
                 </p>
-
             </div>
 
+
+            {{-- Category --}}
             <div>
-
-                <label class="text-slate-500 text-sm">
-
+                <p class="text-sm text-slate-500">
                     Category
+                </p>
 
-                </label>
-
-                <p>
-
+                <p class="mt-1 font-semibold text-slate-800">
                     {{ $equipment->category }}
-
                 </p>
-
             </div>
 
+
+            {{-- Location --}}
             <div>
-
-                <label class="text-slate-500 text-sm">
-
-                    Status
-
-                </label>
-
-                <p>
-
-                    @php
-
-                        $badge = match($equipment->status){
-
-                            'Active' => 'bg-green-100 text-green-700',
-
-                            'Maintenance' => 'bg-yellow-100 text-yellow-700',
-
-                            'Repair' => 'bg-red-100 text-red-700',
-
-                            default => 'bg-slate-100 text-slate-700'
-
-                        };
-
-                    @endphp
-
-                    <span class="px-3 py-1 rounded-full {{ $badge }}">
-
-                        {{ $equipment->status }}
-
-                    </span>
-
-                </p>
-
-            </div>
-
-            <div>
-
-                <label class="text-slate-500 text-sm">
-
+                <p class="text-sm text-slate-500">
                     Location
+                </p>
 
-                </label>
-
-                <p>
-
+                <p class="mt-1 font-semibold text-slate-800">
                     {{ $equipment->location }}
-
                 </p>
-
             </div>
 
+
+            {{-- Manufacturer --}}
             <div>
-
-                <label class="text-slate-500 text-sm">
-
-                    Installation Date
-
-                </label>
-
-                <p>
-
-                    {{ $equipment->installation_date
-                        ? \Carbon\Carbon::parse($equipment->installation_date)->format('d M Y')
-                        : '-'
-                    }}
-
-                </p>
-
-            </div>
-
-            <div>
-
-                <label class="text-slate-500 text-sm">
-
+                <p class="text-sm text-slate-500">
                     Manufacturer
+                </p>
 
-                </label>
-
-                <p>
-
+                <p class="mt-1 font-semibold text-slate-800">
                     {{ $equipment->manufacturer ?: '-' }}
-
                 </p>
-
             </div>
 
+
+            {{-- Model --}}
             <div>
-
-                <label class="text-slate-500 text-sm">
-
+                <p class="text-sm text-slate-500">
                     Model
-
-                </label>
-
-                <p>
-
-                    {{ $equipment->model ?: '-' }}
-
                 </p>
 
+                <p class="mt-1 font-semibold text-slate-800">
+                    {{ $equipment->model ?: '-' }}
+                </p>
             </div>
 
+
+            {{-- Serial Number --}}
             <div>
-
-                <label class="text-slate-500 text-sm">
-
+                <p class="text-sm text-slate-500">
                     Serial Number
-
-                </label>
-
-                <p>
-
-                    {{ $equipment->serial_number ?: '-' }}
-
                 </p>
 
+                <p class="mt-1 font-semibold text-slate-800">
+                    {{ $equipment->serial_number ?: '-' }}
+                </p>
+            </div>
+
+
+            {{-- Installation Date --}}
+            <div>
+                <p class="text-sm text-slate-500">
+                    Installation Date
+                </p>
+
+                <p class="mt-1 font-semibold text-slate-800">
+                    {{ $equipment->installation_date?->format('d M Y') ?? '-' }}
+                </p>
+            </div>
+
+
+            {{-- Status --}}
+            <div>
+                <p class="text-sm text-slate-500">
+                    Current Status
+                </p>
+
+                <div class="mt-2">
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $statusBadge }}">
+                        {{ $equipment->status }}
+                    </span>
+                </div>
             </div>
 
         </div>
@@ -248,470 +227,694 @@
 
 
     {{-- Description --}}
-    <div class="bg-white rounded-2xl border shadow-sm">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
-        <div class="p-6 border-b">
+        <div class="px-6 py-5 border-b border-slate-200">
 
-            <h2 class="text-xl font-semibold">
-
+            <h2 class="text-xl font-semibold text-slate-800">
                 Description
-
             </h2>
 
         </div>
 
-        <div class="p-6 text-slate-700">
-
+        <div class="p-6 text-slate-700 whitespace-pre-line">
             {{ $equipment->description ?: 'No description available.' }}
-
         </div>
 
     </div>
 
 
-    <div class="bg-white rounded-2xl border shadow-sm mb-6">
+    {{-- Maintenance Summary --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
-    <div class="p-6 border-b">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <p class="text-sm text-slate-500">
+                Total Maintenance
+            </p>
 
-        <h2 class="text-xl font-semibold">
+            <p class="mt-2 text-3xl font-bold text-slate-800">
+                {{ $summary['total'] }}
+            </p>
+        </div>
 
-            Add Maintenance Record
 
-        </h2>
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <p class="text-sm text-slate-500">
+                Preventive
+            </p>
 
-        <p class="text-slate-500 mt-1">
+            <p class="mt-2 text-3xl font-bold text-green-600">
+                {{ $summary['preventive'] }}
+            </p>
+        </div>
 
-            Record preventive, corrective, calibration, or inspection activities.
 
-        </p>
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <p class="text-sm text-slate-500">
+                Corrective
+            </p>
+
+            <p class="mt-2 text-3xl font-bold text-red-600">
+                {{ $summary['corrective'] }}
+            </p>
+        </div>
+
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <p class="text-sm text-slate-500">
+                Inspection
+            </p>
+
+            <p class="mt-2 text-3xl font-bold text-blue-600">
+                {{ $summary['inspection'] }}
+            </p>
+        </div>
 
     </div>
 
-    @if($errors->any())
 
-<div class="mb-6 rounded-xl border border-red-200 bg-red-50 p-5">
+    {{-- Last Maintenance --}}
+    @if($summary['last'])
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm">
 
-    <ul class="list-disc ml-5 text-red-600 space-y-1">
+            <div class="px-6 py-5 border-b border-slate-200">
 
-        @foreach($errors->all() as $error)
-
-            <li>{{ $error }}</li>
-
-        @endforeach
-
-    </ul>
-
-</div>
-
-@endif
-    <form
-        action="{{ route('equipment.maintenance-history.store', $equipment) }}"
-        method="POST">
-
-        @csrf
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
-
-            {{-- Maintenance Date --}}
-            <div>
-
-                <label class="block text-sm font-medium mb-2">
-
-                    Maintenance Date
-
-                </label>
-
-                <input
-                    type="date"
-                    name="maintenance_date"
-                    value="{{ old('maintenance_date', date('Y-m-d')) }}"
-                    class="w-full rounded-xl border-slate-300"
-                    required>
+                <h2 class="text-xl font-semibold text-slate-800">
+                    Latest Maintenance
+                </h2>
 
             </div>
 
-            {{-- Type --}}
-            <div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                <label class="block text-sm font-medium mb-2">
+                <div>
+                    <p class="text-sm text-slate-500">
+                        Date
+                    </p>
 
-                    Maintenance Type
+                    <p class="mt-1 font-semibold text-slate-800">
+                        {{ $summary['last']->maintenance_date?->format('d M Y') ?? '-' }}
+                    </p>
+                </div>
 
-                </label>
 
-                <select
-                    name="maintenance_type"
-                    class="w-full rounded-xl border-slate-300"
-                    required>
+                <div>
+                    <p class="text-sm text-slate-500">
+                        Type
+                    </p>
 
-                    <option value="Preventive">Preventive</option>
-                    <option value="Corrective">Corrective</option>
-                    <option value="Calibration">Calibration</option>
-                    <option value="Inspection">Inspection</option>
+                    <p class="mt-1 font-semibold text-slate-800">
+                        {{ $summary['last']->maintenance_type }}
+                    </p>
+                </div>
 
-                </select>
 
-            </div>
+                <div>
+                    <p class="text-sm text-slate-500">
+                        Technician
+                    </p>
 
-            {{-- Work Order --}}
-            <div>
-
-                <label class="block text-sm font-medium mb-2">
-
-                    Work Order
-
-                </label>
-
-                <input
-                    type="text"
-                    name="work_order"
-                    value="{{ old('work_order') }}"
-                    class="w-full rounded-xl border-slate-300">
-
-            </div>
-
-            {{-- Technician --}}
-            <div>
-
-                <label class="block text-sm font-medium mb-2">
-
-                    Technician
-
-                </label>
-
-                <input
-                    type="text"
-                    name="performed_by"
-                    value="{{ old('performed_by', auth()->user()->name) }}"
-                    class="w-full rounded-xl border-slate-300"
-                    required>
-
-            </div>
-
-            {{-- Result --}}
-            <div>
-
-                <label class="block text-sm font-medium mb-2">
-
-                    Result
-
-                </label>
-
-                <select
-                    name="result"
-                    class="w-full rounded-xl border-slate-300">
-
-                    <option value="Completed">Completed</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Need Follow Up">Need Follow Up</option>
-
-                </select>
-
-            </div>
-
-            {{-- Cost --}}
-            <div>
-
-                <label class="block text-sm font-medium mb-2">
-
-                    Cost (Rp)
-
-                </label>
-
-                <input
-                    type="number"
-                    name="cost"
-                    value="{{ old('cost',0) }}"
-                    class="w-full rounded-xl border-slate-300">
-
-            </div>
-
-            {{-- Description --}}
-            <div class="md:col-span-2">
-
-                <label class="block text-sm font-medium mb-2">
-
-                    Description
-
-                </label>
-
-                <textarea
-                    name="description"
-                    rows="4"
-                    class="w-full rounded-xl border-slate-300">{{ old('description') }}</textarea>
+                    <p class="mt-1 font-semibold text-slate-800">
+                        {{ $summary['last']->technician }}
+                    </p>
+                </div>
 
             </div>
 
         </div>
+    @endif
 
-        <div class="border-t p-6 flex justify-end">
 
-            <button
-                type="submit"
-                class="px-6 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
+    {{-- Add Maintenance --}}
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
-                Save Maintenance
+        <div class="px-6 py-5 border-b border-slate-200">
 
-            </button>
-
-        </div>
-
-    </form>
-
-</div>
-
-    {{-- Maintenance History --}}
-<div class="bg-white rounded-2xl border shadow-sm">
-
-    <div class="flex items-center justify-between p-6 border-b">
-
-        <div>
-
-            <h2 class="text-xl font-semibold">
-
-                Maintenance History
-
+            <h2 class="text-xl font-semibold text-slate-800">
+                Add Maintenance Record
             </h2>
 
             <p class="text-sm text-slate-500 mt-1">
-
-                History of preventive, corrective, calibration and inspection activities.
-
+                Record preventive, corrective, calibration, or inspection activities.
             </p>
 
         </div>
 
-       <form
-    action="{{ route('equipment.maintenance-history.store', $equipment) }}"
-    method="POST">
 
-    @csrf
+        <form
+            action="{{ route('equipment.maintenance-history.store', $equipment) }}"
+            method="POST"
+        >
+            @csrf
 
-    ...
-</form>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                {{-- Maintenance Date --}}
+                <div>
+                    <label
+                        for="maintenance_date"
+                        class="block text-sm font-medium text-slate-700 mb-2"
+                    >
+                        Maintenance Date
+                        <span class="text-red-500">*</span>
+                    </label>
+
+                    <input
+                        id="maintenance_date"
+                        type="date"
+                        name="maintenance_date"
+                        value="{{ old('maintenance_date', date('Y-m-d')) }}"
+                        class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                        required
+                    >
+                </div>
+
+
+                {{-- Maintenance Type --}}
+                <div>
+                    <label
+                        for="maintenance_type"
+                        class="block text-sm font-medium text-slate-700 mb-2"
+                    >
+                        Maintenance Type
+                        <span class="text-red-500">*</span>
+                    </label>
+
+                    <select
+                        id="maintenance_type"
+                        name="maintenance_type"
+                        class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                        required
+                    >
+                        @foreach([
+                            'Preventive',
+                            'Corrective',
+                            'Calibration',
+                            'Inspection',
+                        ] as $type)
+
+                            <option
+                                value="{{ $type }}"
+                                @selected(old('maintenance_type', 'Preventive') === $type)
+                            >
+                                {{ $type }}
+                            </option>
+
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+    <label
+        for="status"
+        class="block text-sm font-medium text-slate-700 mb-2"
+    >
+        Status
+        <span class="text-red-500">*</span>
+    </label>
+
+    <select
+        id="status"
+        name="status"
+        required
+        class="w-full rounded-xl border border-slate-300
+               px-4 py-2.5 text-sm bg-white
+               focus:border-blue-500 focus:ring-2
+               focus:ring-blue-100 outline-none transition"
+    >
+
+        @foreach ([
+            'Open',
+            'Progress',
+            'Completed',
+        ] as $status)
+
+            <option
+                value="{{ $status }}"
+                @selected(
+                    old('status', 'Open') === $status
+                )
+            >
+                {{ $status }}
+            </option>
+
+        @endforeach
+
+    </select>
+</div>
+
+
+                {{-- Work Order Number --}}
+                <div>
+                    <label
+                        for="work_order_number"
+                        class="block text-sm font-medium text-slate-700 mb-2"
+                    >
+                        Work Order Number
+                    </label>
+
+                    <input
+                        id="work_order_number"
+                        type="text"
+                        name="work_order_number"
+                        value="{{ old('work_order_number') }}"
+                        class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="Example: WO-2026-001"
+                    >
+                </div>
+
+
+                {{-- Technician --}}
+                <div>
+                    <label
+                        for="technician"
+                        class="block text-sm font-medium text-slate-700 mb-2"
+                    >
+                        Technician
+                        <span class="text-red-500">*</span>
+                    </label>
+
+                    <input
+                        id="technician"
+                        type="text"
+                        name="technician"
+                        value="{{ old('technician', auth()->user()->name) }}"
+                        class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                        required
+                    >
+                </div>
+
+
+                {{-- Duration --}}
+                <div>
+                    <label
+                        for="duration"
+                        class="block text-sm font-medium text-slate-700 mb-2"
+                    >
+                        Duration
+                    </label>
+
+                    <div class="relative">
+
+                        <input
+                            id="duration"
+                            type="number"
+                            name="duration"
+                            value="{{ old('duration') }}"
+                            min="0"
+                            class="w-full rounded-xl border-slate-300 pr-16 focus:border-blue-500 focus:ring-blue-500"
+                            placeholder="0"
+                        >
+
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-400">
+                            min
+                        </span>
+
+                    </div>
+                </div>
+
+
+                {{-- Result --}}
+                <div>
+                    <label
+                        for="result"
+                        class="block text-sm font-medium text-slate-700 mb-2"
+                    >
+                        Result
+                    </label>
+
+                    <select
+                        id="result"
+                        name="result"
+                        class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                    >
+                        <option value="">
+                            Select Result
+                        </option>
+
+                        @foreach([
+                            'Completed',
+                            'Pending',
+                            'Need Follow Up',
+                        ] as $result)
+
+                            <option
+                                value="{{ $result }}"
+                                @selected(old('result') === $result)
+                            >
+                                {{ $result }}
+                            </option>
+
+                        @endforeach
+                    </select>
+                </div>
+
+
+                {{-- Notes --}}
+                <div class="md:col-span-2">
+
+                    <label
+                        for="notes"
+                        class="block text-sm font-medium text-slate-700 mb-2"
+                    >
+                        Notes
+                    </label>
+
+                    <textarea
+                        id="notes"
+                        name="notes"
+                        rows="4"
+                        class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="Describe maintenance activity, findings, corrective action, or other notes..."
+                    >{{ old('notes') }}</textarea>
+
+                </div>
+
+            </div>
+
+
+            <div class="border-t border-slate-200 px-6 py-5 flex justify-end">
+
+                <button
+                    type="submit"
+                    class="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
+                >
+                    Save Maintenance
+                </button>
+
+            </div>
+
+        </form>
 
     </div>
 
-    @if($equipment->maintenanceHistories->count())
 
-        <div class="overflow-x-auto">
+    {{-- Maintenance History --}}
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
-            <table class="min-w-full">
+        <div class="px-6 py-5 border-b border-slate-200">
 
-                <thead class="bg-slate-50">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
 
-                    <tr>
+                <div>
+                    <h2 class="text-xl font-semibold text-slate-800">
+                        Maintenance History
+                    </h2>
 
-                        <th class="px-5 py-4 text-left text-sm font-semibold">
+                    <p class="text-sm text-slate-500 mt-1">
+                        History of maintenance activities for this equipment.
+                    </p>
+                </div>
 
-                            Date
-
-                        </th>
-
-                        <th class="px-5 py-4 text-left text-sm font-semibold">
-
-                            Type
-
-                        </th>
-
-                        <th class="px-5 py-4 text-left text-sm font-semibold">
-
-                            Description
-
-                        </th>
-
-                        <th class="px-5 py-4 text-left text-sm font-semibold">
-
-                            Technician
-
-                        </th>
-
-                        <th class="px-5 py-4 text-left text-sm font-semibold">
-
-                            Result
-
-                        </th>
-
-                        <th class="px-5 py-4 text-center text-sm font-semibold">
-
-                            Action
-
-                        </th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody class="divide-y divide-slate-100">
-
-                    @foreach($equipment->maintenanceHistories as $history)
-
-                        <tr class="hover:bg-slate-50">
-
-                            <td class="px-5 py-4 whitespace-nowrap">
-
-                                {{ \Carbon\Carbon::parse($history->maintenance_date)->format('d M Y') }}
-
-                            </td>
-
-                            <td class="px-5 py-4">
-
-                                @php
-
-                                    $typeColor = match($history->maintenance_type){
-
-                                        'Preventive' => 'bg-green-100 text-green-700',
-
-                                        'Corrective' => 'bg-red-100 text-red-700',
-
-                                        'Calibration' => 'bg-blue-100 text-blue-700',
-
-                                        default => 'bg-slate-100 text-slate-700',
-
-                                    };
-
-                                @endphp
-
-                                <span class="px-3 py-1 rounded-full text-xs font-medium {{ $typeColor }}">
-
-                                    {{ $history->maintenance_type }}
-
-                                </span>
-
-                            </td>
-
-                            <td class="px-5 py-4">
-
-                                {{ $history->description }}
-
-                            </td>
-
-                            <td class="px-5 py-4">
-
-                                {{ $history->performed_by }}
-
-                            </td>
-
-                            <td class="px-5 py-4">
-
-                                {{ $history->result }}
-
-                            </td>
-
-                            <td class="px-5 py-4">
-
-                                <div class="flex justify-center gap-2">
-
-                                    <a
-                                        href="{{ route('equipment.maintenance-history.edit', [$equipment, $history]) }}"
-                                        class="px-3 py-2 rounded-lg bg-yellow-100 text-yellow-700 hover:bg-yellow-200">
-
-                                        Edit
-
-                                    </a>
-
-                                    <form
-                                        method="POST"
-                                        action="{{ route('equipment.maintenance-history.destroy', [$equipment, $history]) }}"
-                                        onsubmit="return confirm('Delete maintenance history?')">
-
-                                        @csrf
-                                        @method('DELETE')
-
-                                        <button
-                                            class="px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200">
-
-                                            Delete
-
-                                        </button>
-
-                                    </form>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-                    @endforeach
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    @else
-
-        <div class="p-12 text-center">
-
-            <div class="text-slate-400 text-lg font-medium">
-
-                No Maintenance History
+                <span class="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-sm">
+                    {{ $summary['total'] }} record(s)
+                </span>
 
             </div>
 
-            <p class="text-slate-500 mt-2">
+        </div>
 
-                This equipment has no maintenance record yet.
 
+        @if($equipment->maintenanceHistories->count())
+
+            <div class="overflow-x-auto">
+
+                <table class="min-w-full">
+
+                    <thead class="bg-slate-50">
+
+                        <tr>
+
+                            <th class="px-5 py-4 text-left text-sm font-semibold text-slate-600">
+                                Date
+                            </th>
+
+                            <th class="px-5 py-4 text-left text-sm font-semibold text-slate-600">
+                                Type
+                            </th>
+
+                            <th class="px-5 py-4 text-left text-sm font-semibold text-slate-600">
+                                Work Order
+                            </th>
+
+                            <th class="px-5 py-4 text-left text-sm font-semibold text-slate-600">
+                                Technician
+                            </th>
+
+                            <th class="px-5 py-4 text-left text-sm font-semibold text-slate-600">
+                                Duration
+                            </th>
+
+                            <th class="px-5 py-4 text-left text-sm font-semibold text-slate-600">
+                                Result
+                            </th>
+
+                            <th class="px-5 py-4 text-left text-sm font-semibold text-slate-600">
+                                Notes
+                            </th>
+
+                            <th class="px-5 py-4 text-center text-sm font-semibold text-slate-600">
+                                Action
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody class="divide-y divide-slate-100">
+
+                        @foreach($equipment->maintenanceHistories as $history)
+
+                            @php
+                                $typeBadge = match ($history->maintenance_type) {
+                                    'Preventive' => 'bg-green-100 text-green-700',
+                                    'Corrective' => 'bg-red-100 text-red-700',
+                                    'Calibration' => 'bg-blue-100 text-blue-700',
+                                    'Inspection' => 'bg-purple-100 text-purple-700',
+                                    default => 'bg-slate-100 text-slate-700',
+                                };
+
+                                $resultBadge = match ($history->result) {
+                                    'Completed' => 'bg-green-100 text-green-700',
+                                    'Pending' => 'bg-yellow-100 text-yellow-700',
+                                    'Need Follow Up' => 'bg-red-100 text-red-700',
+                                    default => 'bg-slate-100 text-slate-700',
+                                };
+                            @endphp
+
+                            <tr class="hover:bg-slate-50 transition">
+
+                                {{-- Date --}}
+                                <td class="px-5 py-4 whitespace-nowrap">
+                                    <span class="text-sm text-slate-700">
+                                        {{ $history->maintenance_date?->format('d M Y') ?? '-' }}
+                                    </span>
+                                </td>
+
+
+                                {{-- Type --}}
+                                <td class="px-5 py-4 whitespace-nowrap">
+
+                                    <span class="px-3 py-1 rounded-full text-xs font-medium {{ $typeBadge }}">
+                                        {{ $history->maintenance_type }}
+                                    </span>
+
+                                </td>
+
+
+                                {{-- Work Order --}}
+                                <td class="px-5 py-4 whitespace-nowrap">
+                                    {{ $history->work_order_number ?: '-' }}
+                                </td>
+
+
+                                {{-- Technician --}}
+                                <td class="px-5 py-4 whitespace-nowrap">
+                                    {{ $history->technician }}
+                                </td>
+
+
+                                {{-- Duration --}}
+                                <td class="px-5 py-4 whitespace-nowrap">
+
+                                    @if($history->duration !== null)
+                                        {{ $history->duration }} min
+                                    @else
+                                        -
+                                    @endif
+
+                                </td>
+
+
+                                {{-- Result --}}
+                                <td class="px-5 py-4 whitespace-nowrap">
+
+                                    <span class="px-3 py-1 rounded-full text-xs font-medium {{ $resultBadge }}">
+                                        {{ $history->result ?: 'Not Set' }}
+                                    </span>
+
+                                </td>
+
+
+                                {{-- Notes --}}
+                                <td class="px-5 py-4 min-w-[220px]">
+                                    <span class="text-sm text-slate-600">
+                                        {{ $history->notes ?: '-' }}
+                                    </span>
+                                </td>
+
+
+                                {{-- Action --}}
+                                <td class="px-5 py-4">
+
+                                    <div class="flex justify-center gap-2">
+
+                                        <a
+                                            href="{{ route(
+                                                'equipment.maintenance-history.edit',
+                                                [$equipment, $history]
+                                            ) }}"
+                                            class="inline-flex items-center px-3 py-2 rounded-lg bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition"
+                                        >
+                                            Edit
+                                        </a>
+
+
+                                        <form
+                                            method="POST"
+                                            action="{{ route(
+                                                'equipment.maintenance-history.destroy',
+                                                [$equipment, $history]
+                                            ) }}"
+                                            onsubmit="return confirm('Delete this maintenance history?')"
+                                        >
+                                            @csrf
+                                            @method('DELETE')
+
+                                            <button
+                                                type="submit"
+                                                class="inline-flex items-center px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition"
+                                            >
+                                                Delete
+                                            </button>
+
+                                        </form>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        @endforeach
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        @else
+
+            <div class="p-12 text-center">
+
+                <div class="text-slate-400 text-lg font-medium">
+                    No Maintenance History
+                </div>
+
+                <p class="text-slate-500 mt-2">
+                    This equipment has no maintenance record yet.
+                </p>
+
+            </div>
+
+        @endif
+
+    </div>
+
+
+    {{-- Future Modules --}}
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+
+        <div class="px-6 py-5 border-b border-slate-200">
+
+            <h2 class="text-xl font-semibold text-slate-800">
+                Future Modules
+            </h2>
+
+            <p class="text-sm text-slate-500 mt-1">
+                Additional equipment management modules planned for future sprints.
             </p>
 
         </div>
 
-    @endif
 
-</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 p-6">
 
-    {{-- Future Module --}}
-    <div class="bg-white rounded-2xl border shadow-sm">
+            <div class="rounded-xl border border-dashed border-slate-300 p-5">
+                <p class="font-semibold text-slate-700">
+                    Calibration History
+                </p>
 
-        <div class="p-6 border-b">
-
-            <h2 class="text-xl font-semibold">
-
-                Future Module
-
-            </h2>
-
-        </div>
-
-        <div class="grid md:grid-cols-3 gap-5 p-6">
-
-            <div class="rounded-xl border p-5">
-
-                Calibration History
-
+                <p class="text-sm text-slate-500 mt-1">
+                    Calibration records and schedules.
+                </p>
             </div>
 
-            <div class="rounded-xl border p-5">
 
-                Preventive Maintenance
+            <div class="rounded-xl border border-dashed border-slate-300 p-5">
+                <p class="font-semibold text-slate-700">
+                    Preventive Maintenance
+                </p>
 
+                <p class="text-sm text-slate-500 mt-1">
+                    Preventive maintenance planning.
+                </p>
             </div>
 
-            <div class="rounded-xl border p-5">
 
-                Corrective Maintenance
+            <div class="rounded-xl border border-dashed border-slate-300 p-5">
+                <p class="font-semibold text-slate-700">
+                    Corrective Maintenance
+                </p>
 
+                <p class="text-sm text-slate-500 mt-1">
+                    Corrective maintenance tracking.
+                </p>
             </div>
 
-            <div class="rounded-xl border p-5">
 
-                Work Order
+            <div class="rounded-xl border border-dashed border-slate-300 p-5">
+                <p class="font-semibold text-slate-700">
+                    Work Order
+                </p>
 
+                <p class="text-sm text-slate-500 mt-1">
+                    Work order management.
+                </p>
             </div>
 
-            <div class="rounded-xl border p-5">
 
-                Spare Part
+            <div class="rounded-xl border border-dashed border-slate-300 p-5">
+                <p class="font-semibold text-slate-700">
+                    Spare Part
+                </p>
 
+                <p class="text-sm text-slate-500 mt-1">
+                    Spare part inventory.
+                </p>
             </div>
 
-            <div class="rounded-xl border p-5">
 
-                Documents
+            <div class="rounded-xl border border-dashed border-slate-300 p-5">
+                <p class="font-semibold text-slate-700">
+                    Documents
+                </p>
 
+                <p class="text-sm text-slate-500 mt-1">
+                    Equipment manuals and documents.
+                </p>
             </div>
 
         </div>
