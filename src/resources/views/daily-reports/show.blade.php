@@ -96,6 +96,30 @@
                             </button>
                         </form>
 
+                        <a
+                            href="{{ route('daily-reports.preview', $dailyReport) }}"
+                            class="inline-flex items-center justify-center gap-2
+                                rounded-xl bg-red-600 px-4 py-2.5
+                                text-sm font-semibold text-white
+                                shadow-sm transition hover:bg-red-700"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="h-5 w-5"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                stroke-width="1.8">
+                                <path stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M12 3v12m0 0 4-4m-4 4-4-4"/>
+                                <path stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M5 17v3h14v-3"/>
+                            </svg>
+
+                            Preview PDF
+                        </a>
+
                     @endif
 
 

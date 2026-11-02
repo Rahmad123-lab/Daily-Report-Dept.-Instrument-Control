@@ -46,4 +46,14 @@ class DailyReport extends Model
             'daily_report_id'
         );
     }
+    /**
+ * Petugas piket malam.
+ */
+public function nightDutyUser()
+{
+    return $this->belongsTo(
+        User::class,
+        'night_duty_user_id'
+    );
+}
 }

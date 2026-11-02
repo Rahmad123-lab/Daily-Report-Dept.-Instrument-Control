@@ -29,13 +29,10 @@
         SIDEBAR
     ========================================================== --}}
     <aside
-        class="w-64
-               bg-slate-950
-               text-white
-               flex flex-col
-               fixed inset-y-0 left-0
-               z-40"
-    >
+    class="fixed inset-y-0 left-0 z-40
+           flex h-screen w-64 flex-col
+           overflow-hidden
+           bg-slate-950 text-white">
 
 
         {{-- =====================================================
@@ -123,10 +120,11 @@
         {{-- =====================================================
             NAVIGATION
         ====================================================== --}}
-        <nav
-    class="flex-1
-           p-4
-           space-y-1"
+ <nav
+    class="flex-1 min-h-0 overflow-y-auto
+           p-4 space-y-1
+           [scrollbar-width:thin]
+           [scrollbar-color:#334155_transparent]"
 >
 
 
@@ -448,197 +446,133 @@
 
 
 
-            {{-- =================================================
-                EMPLOYEE
-            ================================================== --}}
-            <a
-                href="#"
-                class="
-                    flex items-center gap-3
-                    px-4 py-3
-                    rounded-xl
-                    text-slate-400
-                    hover:bg-slate-800
-                    hover:text-white
-                    transition
-                    group
-                "
-            >
+           {{-- =================================================
+    EMPLOYEE MANAGEMENT
+================================================== --}}
+<a
+    href="{{ route('admin.employees.index') }}"
+    @if (request()->routeIs('admin.employees.*'))
+        aria-current="page"
+    @endif
+    class="
+        flex items-center gap-3
+        px-4 py-3
+        rounded-xl
+        transition
+        group
+        {{ request()->routeIs('admin.employees.*')
+            ? 'bg-blue-600 text-white shadow-sm'
+            : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+        }}
+    "
+>
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="shrink-0"
+        aria-hidden="true"
+    >
+        <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+        <circle cx="9.5" cy="7" r="4" />
+        <path d="M17 11a4 4 0 1 0 0-8M21 21v-2a4 4 0 0 0-3-3.87" />
+    </svg>
 
-                <svg
-                    class="w-5 h-5
-                           text-slate-500
-                           group-hover:text-slate-300"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-
-                    <path
-                        stroke-linecap="round"
-                        stroke-width="1.8"
-                        d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"
-                    />
-
-                    <circle
-                        cx="9.5"
-                        cy="7"
-                        r="4"
-                        stroke-width="1.8"
-                    />
-
-                    <path
-                        stroke-linecap="round"
-                        stroke-width="1.8"
-                        d="M17 11a4 4 0 1 0 0-8M21 21v-2a4 4 0 0 0-3-3.87"
-                    />
-
-                </svg>
+    <span class="font-medium">
+        Employee
+    </span>
+</a>
 
 
-                <span class="font-medium">
-                    Employee
-                </span>
+          {{-- TRAINING MANAGEMENT --}}
+<a
+    href="{{ route('trainings.index') }}"
+    @if(request()->routeIs('trainings.*'))
+        aria-current="page"
+    @endif
+    class="
+        group flex items-center gap-3 rounded-xl
+        px-4 py-3 transition
+        {{ request()->routeIs('trainings.*')
+            ? 'bg-blue-600 text-white shadow-sm'
+            : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+        }}
+    "
+>
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="shrink-0 {{
+            request()->routeIs('trainings.*')
+                ? 'text-white'
+                : 'text-slate-500 group-hover:text-slate-300'
+        }}"
+        aria-hidden="true"
+    >
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/>
+        <path d="M8 7h8M8 11h8"/>
+    </svg>
 
-
-                <span
-                    class="ml-auto
-                           text-[9px]
-                           uppercase
-                           tracking-wide
-                           text-slate-600"
-                >
-                    Soon
-                </span>
-
-            </a>
-
-
-
-            {{-- =================================================
-                TRAINING
-            ================================================== --}}
-            <a
-                href="#"
-                class="
-                    flex items-center gap-3
-                    px-4 py-3
-                    rounded-xl
-                    text-slate-400
-                    hover:bg-slate-800
-                    hover:text-white
-                    transition
-                    group
-                "
-            >
-
-                <svg
-                    class="w-5 h-5
-                           text-slate-500
-                           group-hover:text-slate-300"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="1.8"
-                        d="M3 7.5 12 3l9 4.5L12 12 3 7.5Z"
-                    />
-
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="1.8"
-                        d="M6 10v5.5c0 1.7 2.7 3.5 6 3.5s6-1.8 6-3.5V10"
-                    />
-
-                </svg>
-
-
-                <span class="font-medium">
-                    Training
-                </span>
-
-
-                <span
-                    class="ml-auto
-                           text-[9px]
-                           uppercase
-                           tracking-wide
-                           text-slate-600"
-                >
-                    Soon
-                </span>
-
-            </a>
+    <span class="font-medium">Training</span>
+</a>
 
 
 
-            {{-- =================================================
-                COMPETENCY
-            ================================================== --}}
-            <a
-                href="#"
-                class="
-                    flex items-center gap-3
-                    px-4 py-3
-                    rounded-xl
-                    text-slate-400
-                    hover:bg-slate-800
-                    hover:text-white
-                    transition
-                    group
-                "
-            >
+{{-- COMPETENCY MANAGEMENT --}}
+<a
+    href="{{ route('competencies.index') }}"
+    @if(request()->routeIs('competencies.*') ||
+        request()->routeIs('employee-competencies.*'))
+        aria-current="page"
+    @endif
+    class="
+        group flex items-center gap-3 rounded-xl
+        px-4 py-3 transition
+        {{ request()->routeIs('competencies.*') ||
+           request()->routeIs('employee-competencies.*')
+            ? 'bg-blue-600 text-white shadow-sm'
+            : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+        }}
+    "
+>
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="shrink-0 {{
+            request()->routeIs('competencies.*') ||
+            request()->routeIs('employee-competencies.*')
+                ? 'text-white'
+                : 'text-slate-500 group-hover:text-slate-300'
+        }}"
+        aria-hidden="true"
+    >
+        <path d="m12 15 2 2 4-4"/>
+        <path d="M3 6.5 12 3l9 3.5v5c0 5-4 8-9 9.5-5-1.5-9-4.5-9-9.5v-5Z"/>
+    </svg>
 
-                <svg
-                    class="w-5 h-5
-                           text-slate-500
-                           group-hover:text-slate-300"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="1.8"
-                        d="M4 19V5m0 14h16"
-                    />
-
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="1.8"
-                        d="m7 15 3-4 3 2 5-6"
-                    />
-
-                </svg>
-
-
-                <span class="font-medium">
-                    Competency
-                </span>
-
-
-                <span
-                    class="ml-auto
-                           text-[9px]
-                           uppercase
-                           tracking-wide
-                           text-slate-600"
-                >
-                    Soon
-                </span>
-
-            </a>
-
-        </nav>
-
+    <span class="font-medium">Competency</span>
+</a>
 
 
         {{-- =====================================================
@@ -646,12 +580,7 @@
         ====================================================== --}}
         <div class="p-4 border-t border-slate-800">
 
-            <div
-                class="flex items-center gap-3
-                       px-3 py-3
-                       rounded-xl
-                       bg-slate-900"
-            >
+            <div class="shrink-0 p-4 border-t border-slate-800 bg-slate-950">
 
                 <div
                     class="w-10 h-10
@@ -698,6 +627,46 @@
 
             </div>
 
+            {{-- Logout Button --}}
+            <form method="POST" action="{{ route('logout') }}" class="mt-3">
+                @csrf
+
+                <button
+                    type="submit"
+                    class="group flex w-full items-center gap-3 rounded-xl
+                           border border-slate-800 px-4 py-3
+                           text-sm font-semibold text-slate-300
+                           transition duration-200
+                           hover:border-red-500/30
+                           hover:bg-red-500/10
+                           hover:text-red-400
+                           focus:outline-none focus:ring-2
+                           focus:ring-red-500 focus:ring-offset-2
+                           focus:ring-offset-slate-950"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="shrink-0"
+                        aria-hidden="true"
+                    >
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+
+                    <span>Logout</span>
+                </button>
+            </form>
+
+            {{-- System Information --}}
 
             <div class="px-3 pt-4">
 

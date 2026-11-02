@@ -31,17 +31,20 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt([
-            'nik' => $this->input('nik'),
-            'password' => $this->input('password'),
-        ], $this->boolean('remember'))) {
+        
+if (! Auth::attempt([
+    'nik' => $this->input('nik'),
+    'password' => $this->input('password'),
+    'status' => 'active',
+], $this->boolean('remember'))) {
 
-            RateLimiter::hit($this->throttleKey());
+    RateLimiter::hit($this->throttleKey());
 
-            throw ValidationException::withMessages([
-                'nik' => trans('auth.failed'),
-            ]);
-        }
+    throw ValidationException::withMessages([
+        'nik' => trans('auth.failed'),
+    ]);
+}
+
 
         RateLimiter::clear($this->throttleKey());
     }

@@ -4,19 +4,16 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
     /**
-     * Display the registration view.
+     * Display the registration form.
      */
     public function create(): View
     {
@@ -24,28 +21,70 @@ class RegisteredUserController extends Controller
     }
 
     /**
-     * Handle an incoming registration request.
-     *
-     * @throws ValidationException
+     * Register a new employee account.
      */
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        $validated = $request->validate([
+            'nik' => [
+                'required',
+                'string',
+                'max:20',
+                'regex:/^[0-9]+$/',
+                'unique:users,nik',
+            ],
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                'lowercase',
+                'unique:users,email',
+            ],
+            'department' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'position' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'password' => [
+                'required',
+                'confirmed',
+                Password::defaults(),
+            ],
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+        User::create([
+            'nik' => $validated['nik'],
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'department' => $validated['department'],
+            'position' => $validated['position'],
+
+            // Role tidak boleh ditentukan oleh pendaftar.
+            'role' => 'karyawan',
+
+            // Akun wajib disetujui admin sebelum login.
+            'status' => 'pending',
+
+            'password' => Hash::make($validated['password']),
         ]);
 
-        event(new Registered($user));
-
-        Auth::login($user);
-
-        return redirect(route('dashboard', absolute: false));
+        // Jangan login otomatis sebelum akun disetujui.
+        return redirect()
+            ->route('login')
+            ->with(
+                'status',
+                'Pendaftaran berhasil dikirim. Akun Anda menunggu persetujuan admin.'
+            );
     }
 }

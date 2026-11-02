@@ -1,4 +1,3 @@
-
 @extends('layouts.app')
 
 @section('title', 'Maintenance')
@@ -475,87 +474,132 @@
                                 </span>
                             </td>
 
-                            {{-- Actions --}}
-                            <td class="whitespace-nowrap px-6 py-4 text-right">
-                                @if ($item->equipment)
+ {{-- Actions --}}
+<td class="whitespace-nowrap px-6 py-4 text-right">
+    @if ($item->equipment)
+        <div class="flex flex-wrap items-center justify-end gap-2">
+
+            {{-- Preview PDF --}}
+            <a
+                href="{{ route('maintenance-history.preview', [$item->equipment, $item]) }}"
+                aria-label="Preview PDF maintenance history {{ $item->id }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+                <svg
+                    class="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="1.8"
+                        d="M2.25 12s3.5-6 9.75-6 9.75 6 9.75 6-3.5 6-9.75 6-9.75-6-9.75-6Z"
+                    />
+                    <circle cx="12" cy="12" r="3" stroke-width="1.8"/>
+                </svg>
+                Preview PDF
+            </a>
+
+            {{-- Edit --}}
+            <a
+                href="{{ route('equipment.maintenance-history.edit', [$item->equipment, $item]) }}"
+                aria-label="Edit maintenance history {{ $item->id }}"
+                class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+                <svg
+                    class="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="1.8"
+                        d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5M18.5 3.5a2.121 2.121 0 0 1 3 3L12 16l-4 1 1-4 9.5-9.5Z"
+                    />
+                </svg>
+                Edit
+            </a>
+
+        </div>
+    @else
+        <span class="text-xs text-slate-400">
+            Unavailable
+        </span>
+    @endif
+</td>
+
+                    </tr>
+
+                @empty
+                    <tr>
+                        <td colspan="6" class="px-6 py-16 text-center">
+                            <div class="mx-auto flex max-w-sm flex-col items-center">
+                                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                                    <svg class="h-7 w-7" fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                        aria-hidden="true">
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="1.8"
+                                            d="M9 5h6m-8 4h10m-10 4h10m-10 4h6"
+                                        />
+                                    </svg>
+                                </div>
+
+                                <h3 class="mt-4 text-sm font-semibold text-slate-800">
+                                    No maintenance history
+                                </h3>
+
+                                <p class="mt-1 text-sm text-slate-500">
+                                    @if (
+                                        request()->filled('search') ||
+                                        request()->filled('status') ||
+                                        request()->filled('maintenance_type')
+                                    )
+                                        Tidak ada data yang cocok dengan filter yang dipilih.
+                                    @else
+                                        Belum ada data maintenance. Tambahkan data maintenance pertama.
+                                    @endif
+                                </p>
+
+                                @if (
+                                    request()->filled('search') ||
+                                    request()->filled('status') ||
+                                    request()->filled('maintenance_type')
+                                )
                                     <a
-                                        href="{{ route('equipment.maintenance-history.edit', [$item->equipment, $item]) }}"
-                                        aria-label="Edit maintenance history {{ $item->id }}"
-                                        class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                        href="{{ route('maintenance.index') }}"
+                                        class="mt-4 text-sm font-semibold text-blue-600 hover:text-blue-800"
                                     >
-                                        <svg class="h-4 w-4" fill="none"
-                                            stroke="currentColor" viewBox="0 0 24 24"
-                                            aria-hidden="true">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                stroke-width="1.8"
-                                                d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5M18.5 3.5a2.121 2.121 0 0 1 3 3L12 16l-4 1 1-4 9.5-9.5Z"/>
-                                        </svg>
-                                        Edit
+                                        Clear filters
                                     </a>
                                 @else
-                                    <span class="text-xs text-slate-400">
-                                        Unavailable
-                                    </span>
+                                    <a
+                                        href="{{ route('maintenance.create') }}"
+                                        class="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+                                    >
+                                        Add Maintenance
+                                    </a>
                                 @endif
-                            </td>
-
-                        </tr>
-
-                    @empty
-                        <tr>
-                            <td colspan="6" class="px-6 py-16 text-center">
-                                <div class="mx-auto flex max-w-sm flex-col items-center">
-                                    <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-                                        <svg class="h-7 w-7" fill="none"
-                                            stroke="currentColor" viewBox="0 0 24 24"
-                                            aria-hidden="true">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                stroke-width="1.8"
-                                                d="M9 5h6m-8 4h10m-10 4h10m-10 4h6"/>
-                                        </svg>
-                                    </div>
-
-                                    <h3 class="mt-4 text-sm font-semibold text-slate-800">
-                                        No maintenance history
-                                    </h3>
-
-                                    <p class="mt-1 text-sm text-slate-500">
-                                        @if (request()->filled('search') || request()->filled('status') || request()->filled('maintenance_type'))
-                                            Tidak ada data yang cocok dengan filter yang dipilih.
-                                        @else
-                                            Belum ada data maintenance. Tambahkan data maintenance pertama.
-                                        @endif
-                                    </p>
-
-                                    @if (request()->filled('search') || request()->filled('status') || request()->filled('maintenance_type'))
-                                        <a
-                                            href="{{ route('maintenance.index') }}"
-                                            class="mt-4 text-sm font-semibold text-blue-600 hover:text-blue-800"
-                                        >
-                                            Clear filters
-                                        </a>
-                                    @else
-                                        <a
-                                            href="{{ route('maintenance.create') }}"
-                                            class="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
-                                        >
-                                            <svg class="h-4 w-4" fill="none"
-                                                stroke="currentColor" viewBox="0 0 24 24"
-                                                aria-hidden="true">
-                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                    stroke-width="2" d="M12 4v16m8-8H4"/>
-                                            </svg>
-                                            Add Maintenance
-                                        </a>
-                                    @endif
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
+                            </div>
+                        </td>
+                    </tr>
+                @endforelse
 
                 </tbody>
             </table>
         </div>
+
 
         {{-- Pagination --}}
         @if (method_exists($maintenance, 'hasPages') && $maintenance->hasPages())

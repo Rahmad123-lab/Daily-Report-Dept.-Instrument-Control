@@ -25,6 +25,7 @@ class MaintenanceController extends Controller
                 'string',
                 'max:100',
             ],
+
             'status' => [
                 'nullable',
                 Rule::in([
@@ -33,6 +34,7 @@ class MaintenanceController extends Controller
                     'Completed',
                 ]),
             ],
+
             'maintenance_type' => [
                 'nullable',
                 Rule::in([
@@ -49,25 +51,33 @@ class MaintenanceController extends Controller
         |--------------------------------------------------------------------------
         | Base Query
         |--------------------------------------------------------------------------
+        | Equipment tetap di-load untuk menghindari N+1 query.
+        | Creator tidak di-load karena tidak digunakan pada halaman index.
+        |--------------------------------------------------------------------------
         */
         $query = MaintenanceHistory::query()
-            ->with([
-                'equipment',
-                'creator',
-            ]);
+            ->with('equipment');
 
         /*
         |--------------------------------------------------------------------------
         | Search
         |--------------------------------------------------------------------------
         */
-        if (! empty($filters['search'])) {
-            $search = trim($filters['search']);
+        $search = trim((string) ($filters['search'] ?? ''));
 
+        if ($search !== '') {
             $query->where(function (Builder $builder) use ($search) {
                 $builder
-                    ->where('work_order_number', 'like', "%{$search}%")
-                    ->orWhere('technician', 'like', "%{$search}%")
+                    ->where(
+                        'work_order_number',
+                        'like',
+                        "%{$search}%"
+                    )
+                    ->orWhere(
+                        'technician',
+                        'like',
+                        "%{$search}%"
+                    )
                     ->orWhereHas(
                         'equipment',
                         function (Builder $equipmentQuery) use ($search) {
@@ -98,7 +108,10 @@ class MaintenanceController extends Controller
         |--------------------------------------------------------------------------
         */
         if (! empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            $query->where(
+                'status',
+                $filters['status']
+            );
         }
 
         /*
@@ -117,56 +130,77 @@ class MaintenanceController extends Controller
         |--------------------------------------------------------------------------
         | Dashboard Statistics
         |--------------------------------------------------------------------------
-        | Statistics cover all records, regardless of table filters.
+        | Semua statistik dihitung dalam satu query agregasi.
+        | Statistik tidak terpengaruh filter tabel.
         |--------------------------------------------------------------------------
         */
+        $statsRow = MaintenanceHistory::query()
+            ->selectRaw('COUNT(*) AS total')
+
+            ->selectRaw(
+                'COALESCE(SUM(CASE WHEN status = ? THEN 1 ELSE 0 END), 0) AS open',
+                ['Open']
+            )
+
+            ->selectRaw(
+                'COALESCE(SUM(CASE WHEN status = ? THEN 1 ELSE 0 END), 0) AS progress',
+                ['Progress']
+            )
+
+            ->selectRaw(
+                'COALESCE(SUM(CASE WHEN status = ? THEN 1 ELSE 0 END), 0) AS completed',
+                ['Completed']
+            )
+
+            ->selectRaw(
+                'COALESCE(SUM(CASE WHEN maintenance_type = ? THEN 1 ELSE 0 END), 0) AS preventive',
+                ['Preventive']
+            )
+
+            ->selectRaw(
+                'COALESCE(SUM(CASE WHEN maintenance_type = ? THEN 1 ELSE 0 END), 0) AS corrective',
+                ['Corrective']
+            )
+
+            ->selectRaw(
+                'COALESCE(SUM(CASE WHEN maintenance_type = ? THEN 1 ELSE 0 END), 0) AS calibration',
+                ['Calibration']
+            )
+
+            ->selectRaw(
+                'COALESCE(SUM(CASE WHEN maintenance_type = ? THEN 1 ELSE 0 END), 0) AS inspection',
+                ['Inspection']
+            )
+
+            ->selectRaw(
+                'COALESCE(SUM(CASE WHEN maintenance_type = ? THEN 1 ELSE 0 END), 0) AS breakdown',
+                ['Breakdown']
+            )
+
+            ->first();
+
+        /*
+         * Cast aggregate values to integers.
+         * Keep the same keys used by the Blade view.
+         */
         $stats = [
-            'total' => MaintenanceHistory::count(),
-
-            'open' => MaintenanceHistory::where(
-                'status',
-                'Open'
-            )->count(),
-
-            'progress' => MaintenanceHistory::where(
-                'status',
-                'Progress'
-            )->count(),
-
-            'completed' => MaintenanceHistory::where(
-                'status',
-                'Completed'
-            )->count(),
-
-            'preventive' => MaintenanceHistory::where(
-                'maintenance_type',
-                'Preventive'
-            )->count(),
-
-            'corrective' => MaintenanceHistory::where(
-                'maintenance_type',
-                'Corrective'
-            )->count(),
-
-            'calibration' => MaintenanceHistory::where(
-                'maintenance_type',
-                'Calibration'
-            )->count(),
-
-            'inspection' => MaintenanceHistory::where(
-                'maintenance_type',
-                'Inspection'
-            )->count(),
-
-            'breakdown' => MaintenanceHistory::where(
-                'maintenance_type',
-                'Breakdown'
-            )->count(),
+            'total' => (int) ($statsRow->total ?? 0),
+            'open' => (int) ($statsRow->open ?? 0),
+            'progress' => (int) ($statsRow->progress ?? 0),
+            'completed' => (int) ($statsRow->completed ?? 0),
+            'preventive' => (int) ($statsRow->preventive ?? 0),
+            'corrective' => (int) ($statsRow->corrective ?? 0),
+            'calibration' => (int) ($statsRow->calibration ?? 0),
+            'inspection' => (int) ($statsRow->inspection ?? 0),
+            'breakdown' => (int) ($statsRow->breakdown ?? 0),
         ];
 
         /*
         |--------------------------------------------------------------------------
         | Maintenance Records
+        |--------------------------------------------------------------------------
+        | Paginate 10 records per page.
+        | Preserve filters when navigating pagination.
         |--------------------------------------------------------------------------
         */
         $maintenance = $query

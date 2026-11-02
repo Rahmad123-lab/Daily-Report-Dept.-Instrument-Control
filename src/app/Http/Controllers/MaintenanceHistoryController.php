@@ -7,6 +7,7 @@ use App\Models\MaintenanceHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class MaintenanceHistoryController extends Controller
 {
@@ -75,7 +76,7 @@ class MaintenanceHistoryController extends Controller
             ],
 
             'result' => [
-                'nullable',
+                'required',
                 Rule::in([
                     'Completed',
                     'Pending',
@@ -89,9 +90,14 @@ class MaintenanceHistoryController extends Controller
             ],
         ]);
 
-        // Normalize optional values to match database constraints.
+        // Completed status requires a Completed result.
+        $this->validateCompletedStatus(
+            $validated['status'],
+            $validated['result']
+        );
+
+        // Normalize optional values.
         $validated['duration'] = $validated['duration'] ?? 0;
-        $validated['result'] = $validated['result'] ?? 'Pending';
         $validated['created_by'] = Auth::id();
 
         $equipment->maintenanceHistories()->create($validated);
@@ -174,7 +180,7 @@ class MaintenanceHistoryController extends Controller
             ],
 
             'result' => [
-                'nullable',
+                'required',
                 Rule::in([
                     'Completed',
                     'Pending',
@@ -188,9 +194,14 @@ class MaintenanceHistoryController extends Controller
             ],
         ]);
 
-        // Prevent NULL values for fields with database defaults/constraints.
+        // Completed status requires a Completed result.
+        $this->validateCompletedStatus(
+            $validated['status'],
+            $validated['result']
+        );
+
+        // Normalize optional values.
         $validated['duration'] = $validated['duration'] ?? 0;
-        $validated['result'] = $validated['result'] ?? 'Pending';
 
         $history->update($validated);
 
@@ -219,6 +230,23 @@ class MaintenanceHistoryController extends Controller
                 'success',
                 'Maintenance history berhasil dihapus.'
             );
+    }
+
+    /**
+     * Validate the relationship between status and result.
+     */
+    private function validateCompletedStatus(
+        string $status,
+        string $result
+    ): void {
+        if (
+            $status === 'Completed'
+            && $result !== 'Completed'
+        ) {
+            throw ValidationException::withMessages([
+                'result' => 'Status Completed hanya dapat digunakan jika hasil maintenance Completed.',
+            ]);
+        }
     }
 
     /**
