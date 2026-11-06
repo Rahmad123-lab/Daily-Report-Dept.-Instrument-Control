@@ -54,6 +54,7 @@ class DailyReportExportController extends Controller
         $dailyReport->load([
             'creator:id,name,nik',
             'nightDutyUser:id,name,nik',
+            'attendances.user:id,name,nik',
             'items.workers:id,name,nik',
         ]);
 

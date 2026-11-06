@@ -227,6 +227,32 @@ Route::middleware(['auth', 'active'])->group(function () {
     )->whereNumber('daily_report')
      ->name('daily-reports.export.pdf');
 
+     /*
+|--------------------------------------------------------------------------
+| Daily Report Employee Attendance
+|--------------------------------------------------------------------------
+*/
+
+    Route::post(
+        '/daily-reports/{dailyReport}/attendances',
+        [\App\Http\Controllers\DailyReportAttendanceController::class, 'store']
+    )->whereNumber('dailyReport')
+    ->name('daily-reports.attendances.store');
+
+    Route::put(
+        '/daily-reports/{dailyReport}/attendances/{attendance}',
+        [\App\Http\Controllers\DailyReportAttendanceController::class, 'update']
+    )->whereNumber('dailyReport')
+    ->whereNumber('attendance')
+    ->name('daily-reports.attendances.update');
+
+    Route::delete(
+        '/daily-reports/{dailyReport}/attendances/{attendance}',
+        [\App\Http\Controllers\DailyReportAttendanceController::class, 'destroy']
+    )->whereNumber('dailyReport')
+    ->whereNumber('attendance')
+    ->name('daily-reports.attendances.destroy');
+
 
     /*
     |--------------------------------------------------------------------------

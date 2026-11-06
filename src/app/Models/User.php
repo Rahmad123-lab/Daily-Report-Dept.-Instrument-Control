@@ -56,4 +56,11 @@ class User extends Authenticatable
             'daily_report_item_id'
         );
     }
+    public function dailyReportAttendances()
+    {
+        return $this->hasMany(
+            DailyReportAttendance::class,
+            'user_id'
+        );
+    }
 }

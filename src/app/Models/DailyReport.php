@@ -19,6 +19,11 @@ class DailyReport extends Model
         'notes',
         'created_by',
         'status',
+        'total_employee',
+        'present_employee',
+        'leave_employee',
+        'sick_employee',
+        'permission_employee',
     ];
 
     protected $casts = [
@@ -54,6 +59,13 @@ public function nightDutyUser()
     return $this->belongsTo(
         User::class,
         'night_duty_user_id'
+    );
+}
+public function attendances()
+{
+    return $this->hasMany(
+        DailyReportAttendance::class,
+        'daily_report_id'
     );
 }
 }

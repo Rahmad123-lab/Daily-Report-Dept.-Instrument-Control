@@ -233,22 +233,20 @@ class DailyReportController extends Controller
      * Menampilkan detail Daily Report
      */
     public function show(DailyReport $dailyReport)
-    {
-        $dailyReport->load([
-            'creator',
-            'items.workers',
-        ]);
+        {
+            $dailyReport->load([
+                'creator',
+                'items.workers',
+                'attendances.user',
+            ]);
 
-        $workers = User::orderBy('name')->get();
+            $workers = User::orderBy('name')->get();
 
-        return view(
-            'daily-reports.show',
-            compact(
-                'dailyReport',
-                'workers'
-            )
-        );
-    }
+            return view(
+                'daily-reports.show',
+                compact('dailyReport', 'workers')
+            );
+        }
 
 
     /**
