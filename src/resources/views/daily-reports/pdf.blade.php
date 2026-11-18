@@ -235,10 +235,12 @@
         }
 
         .activity-entry {
+        
     display: block;
     width: 100%;
     margin: 0 0 10px;
     padding: 0 0 8px;
+    
     border-bottom: 1px solid #cbd5e1;
 
     /* Keep each activity together */

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
+
 class Training extends Model
 {
     protected $fillable = [
@@ -41,9 +42,22 @@ class Training extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
-    /**
- * Competencies covered by this training.
+/**
+ * Get active training participants.
+ *
+ * Active participants occupy training quota:
+ * - registered
+ * - approved
  */
+public function activeParticipants(): HasMany
+{
+    return $this->participants()
+        ->whereIn('registration_status', [
+            'registered',
+            'approved',
+        ]);
+}
+
 public function competencies(): BelongsToMany
 {
     return $this->belongsToMany(

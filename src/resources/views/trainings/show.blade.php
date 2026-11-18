@@ -23,37 +23,80 @@
 <div class="mx-auto max-w-5xl space-y-6">
 
     {{-- Navigation and Actions --}}
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <a href="{{ route('trainings.index') }}"
-           class="inline-flex items-center gap-2 text-sm font-medium
-                  text-slate-500 transition hover:text-blue-600">
-            <svg xmlns="http://www.w3.org/2000/svg"
-                 class="h-4 w-4" fill="none"
-                 viewBox="0 0 24 24" stroke="currentColor"
-                 stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M15 19l-7-7 7-7"/>
-            </svg>
-            Back to Training List
-        </a>
+<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
-        @if(auth()->user()->role === 'admin')
+    <a href="{{ route('trainings.index') }}"
+       class="inline-flex items-center gap-2 text-sm font-medium
+              text-slate-500 transition hover:text-blue-600">
+
+        <svg xmlns="http://www.w3.org/2000/svg"
+             class="h-4 w-4"
+             fill="none"
+             viewBox="0 0 24 24"
+             stroke="currentColor"
+             stroke-width="1.8">
+            <path stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15 19l-7-7 7-7"/>
+        </svg>
+
+        Back to Training List
+    </a>
+
+    @if (auth()->user()->role === 'admin')
+
+        <div class="flex flex-wrap items-center gap-3">
+
+            {{-- Edit Training --}}
             <a href="{{ route('trainings.edit', $training) }}"
                class="inline-flex items-center justify-center gap-2
                       rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold
                       text-white shadow-sm transition hover:bg-blue-700">
+
                 <svg xmlns="http://www.w3.org/2000/svg"
-                     class="h-4 w-4" fill="none"
-                     viewBox="0 0 24 24" stroke="currentColor"
+                     class="h-4 w-4"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke="currentColor"
                      stroke-width="1.8">
-                    <path stroke-linecap="round" stroke-linejoin="round"
+                    <path stroke-linecap="round"
+                          stroke-linejoin="round"
                           d="M16.862 4.487l2.651 2.651M4 20l4.5-1
                              11-11a1.875 1.875 0 0 0-2.65-2.65l-11 11L4 20z"/>
                 </svg>
+
                 Edit Training
             </a>
-        @endif
-    </div>
+
+            {{-- Evaluation Report --}}
+            @if ($training->status === 'completed')
+                <a href="{{ route('trainings.evaluations.index', $training) }}"
+                class="inline-flex items-center justify-center gap-2
+                        rounded-xl bg-blue-600 px-5 py-3 text-sm
+                        font-semibold text-white shadow-sm
+                        transition hover:bg-blue-700
+                        focus:outline-none focus:ring-2
+                        focus:ring-blue-500 focus:ring-offset-2">
+
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        class="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width="1.8">
+                        <path stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M3 3v18h18M19 9l-5 5-4-4-3 3"/>
+                    </svg>
+
+                    Evaluation Report
+                </a>
+            @endif
+        </div>
+
+    @endif
+
+</div>
 
     {{-- Training Overview --}}
     <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -210,7 +253,7 @@
                 <div>
                     <p class="text-sm text-slate-500">Registered Records</p>
                     <p class="mt-1 font-semibold text-slate-800">
-                        {{ $training->participants_count }} participants
+                        {{ $training->active_participants_count }} active participants
                     </p>
                 </div>
             </div>
@@ -493,6 +536,11 @@
                                        uppercase tracking-wider text-slate-500">
                                 Attendance
                             </th>
+
+                            <th class="px-5 py-3 text-left text-xs font-semibold
+                                       uppercase tracking-wider text-slate-500">
+                                Action
+                            </th>
                         </tr>
                     </thead>
 
@@ -611,6 +659,33 @@
                                         <p class="text-xs text-slate-400">
                                             Approve registration first.
                                         </p>
+                                    @endif
+                                </td>
+
+                                {{-- Competency evaluation action --}}
+                                <td class="whitespace-nowrap px-5 py-4">
+                                    @if(
+                                        $training->status === 'completed'
+                                        && $participant->registration_status === 'approved'
+                                        && $participant->attendance_status === 'present'
+                                    )
+                                        <a
+                                            href="{{ route(
+                                                'trainings.participants.evaluations.create',
+                                                [$training, $participant]
+                                            ) }}"
+                                            class="inline-flex items-center justify-center rounded-lg
+                                                   bg-blue-50 px-3 py-2 text-xs font-semibold
+                                                   text-blue-700 transition hover:bg-blue-100
+                                                   focus:outline-none focus:ring-2
+                                                   focus:ring-blue-500 focus:ring-offset-2"
+                                        >
+                                            Evaluate Competency
+                                        </a>
+                                    @else
+                                        <span class="text-xs text-slate-400">
+                                            Not eligible
+                                        </span>
                                     @endif
                                 </td>
 

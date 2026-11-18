@@ -31,7 +31,7 @@ class TrainingController extends Controller
         ]);
 
         $trainings = Training::query()
-            ->withCount('participants')
+            ->withCount('activeParticipants')
             ->when(
                 filled($validated['search'] ?? null),
                 function ($query) use ($validated) {
@@ -106,26 +106,27 @@ class TrainingController extends Controller
             ->with('success', 'Training berhasil ditambahkan.');
     }
 
-    /**
-     * Display training details.
-     */
-    public function show(Request $request, Training $training): View
-    {
-        $training->load('competencies');
+   /**
+ * Display training details.
+ */
+public function show(Request $request, Training $training): View
+{
+    $training->load('competencies');
 
-        if ($request->user()->role === 'admin') {
-            $training->load('participants.user');
-        } else {
-            $training->load([
-                'participants' => fn ($query) => $query
-                    ->where('user_id', $request->user()->id),
-            ]);
-        }
-
-        $training->loadCount('participants');
-
-        return view('trainings.show', compact('training'));
+    if ($request->user()->role === 'admin') {
+        $training->load('participants.user');
+    } else {
+        $training->load([
+            'participants' => fn ($query) => $query
+                ->where('user_id', $request->user()->id),
+        ]);
     }
+
+    // Consistent active participant count for all roles.
+    $training->loadCount('activeParticipants');
+
+    return view('trainings.show', compact('training'));
+}
 
     /**
      * Show edit form.
@@ -194,13 +195,22 @@ class TrainingController extends Controller
      * Delete training.
      */
     public function destroy(Training $training): RedirectResponse
-    {
-        $training->delete();
-
-        return redirect()
-            ->route('trainings.index')
-            ->with('success', 'Training berhasil dihapus.');
+{
+    if ($training->participants()->exists()) {
+        return back()->with(
+            'error',
+            'Training sudah memiliki riwayat peserta atau kehadiran. '
+            . 'Training tidak dapat dihapus. '
+            . 'Ubah status menjadi cancelled jika pelatihan tidak dilanjutkan.'
+        );
     }
+
+    $training->delete();
+
+    return redirect()
+        ->route('trainings.index')
+        ->with('success', 'Training berhasil dihapus.');
+}
 
     /**
      * Validation rules for training and competency mapping.

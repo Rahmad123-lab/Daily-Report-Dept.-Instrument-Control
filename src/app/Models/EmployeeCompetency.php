@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
 
 class EmployeeCompetency extends Model
 {
@@ -41,4 +43,17 @@ class EmployeeCompetency extends Model
     {
         return $this->belongsTo(User::class, 'assessed_by');
     }
+    /**
+ * Historical assessment records.
+ */
+public function assessments(): HasMany
+{
+    return $this->hasMany(EmployeeCompetencyAssessment::class)
+        ->orderByDesc('assessed_at')
+        ->orderByDesc('id');
+}
+public function trainingEvaluations(): HasMany
+{
+    return $this->hasMany(TrainingCompetencyEvaluation::class);
+}
 }

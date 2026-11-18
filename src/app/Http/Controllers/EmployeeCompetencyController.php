@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Competency;
 use App\Models\EmployeeCompetency;
+use App\Models\EmployeeCompetencyAssessment;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -76,29 +78,29 @@ class EmployeeCompetencyController extends Controller
             ->withQueryString();
 
         $competencies = collect();
-$employees = collect();
+        $employees = collect();
 
-if ($request->user()->role === 'admin') {
-    $competencies = Competency::query()
-        ->where('is_active', true)
-        ->orderBy('category')
-        ->orderBy('name')
-        ->get(['id', 'code', 'name', 'category']);
+        if ($request->user()->role === 'admin') {
+            $competencies = Competency::query()
+                ->where('is_active', true)
+                ->orderBy('category')
+                ->orderBy('name')
+                ->get(['id', 'code', 'name', 'category']);
 
-    $employees = User::query()
-        ->where('status', 'active')
-        ->orderBy('name')
-        ->get(['id', 'name', 'nik']);
-}
+            $employees = User::query()
+                ->where('status', 'active')
+                ->orderBy('name')
+                ->get(['id', 'name', 'nik']);
+        }
 
-return view(
-    'employee-competencies.index',
-    compact(
-        'employeeCompetencies',
-        'competencies',
-        'employees'
-    )
-);
+        return view(
+            'employee-competencies.index',
+            compact(
+                'employeeCompetencies',
+                'competencies',
+                'employees'
+            )
+        );
     }
 
     /**
@@ -158,23 +160,34 @@ return view(
             return back()
                 ->withInput()
                 ->withErrors([
-                    'competency_id' => 'Kompetensi ini sudah ditetapkan kepada karyawan tersebut.',
+                    'competency_id' =>
+                        'Kompetensi ini sudah ditetapkan kepada karyawan tersebut.',
                 ]);
         }
 
         $currentLevel = $validated['current_level'] ?? null;
 
-        EmployeeCompetency::create([
-            ...$validated,
+        DB::transaction(function () use (
+            $validated,
+            $currentLevel,
+            $request
+        ) {
+            $employeeCompetency = EmployeeCompetency::create([
+                ...$validated,
 
-            'assessed_by' => $currentLevel !== null
-                ? $request->user()->id
-                : null,
+                'assessed_by' => $currentLevel !== null
+                    ? $request->user()->id
+                    : null,
 
-            'assessed_at' => $currentLevel !== null
-                ? ($validated['assessed_at'] ?? now()->toDateString())
-                : null,
-        ]);
+                'assessed_at' => $currentLevel !== null
+                    ? ($validated['assessed_at'] ?? now()->toDateString())
+                    : null,
+            ]);
+
+            if ($currentLevel !== null) {
+                $this->recordAssessmentHistory($employeeCompetency);
+            }
+        });
 
         return redirect()
             ->route('employee-competencies.index')
@@ -221,17 +234,33 @@ return view(
 
         $currentLevel = $validated['current_level'] ?? null;
 
-        $employeeCompetency->update([
-            ...$validated,
+        DB::transaction(function () use (
+            $employeeCompetency,
+            $validated,
+            $currentLevel,
+            $request
+        ) {
+            $record = EmployeeCompetency::query()
+                ->whereKey($employeeCompetency->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-            'assessed_by' => $currentLevel !== null
-                ? $request->user()->id
-                : null,
+            $record->update([
+                ...$validated,
 
-            'assessed_at' => $currentLevel !== null
-                ? ($validated['assessed_at'] ?? now()->toDateString())
-                : null,
-        ]);
+                'assessed_by' => $currentLevel !== null
+                    ? $request->user()->id
+                    : null,
+
+                'assessed_at' => $currentLevel !== null
+                    ? ($validated['assessed_at'] ?? now()->toDateString())
+                    : null,
+            ]);
+
+            if ($currentLevel !== null) {
+                $this->recordAssessmentHistory($record);
+            }
+        });
 
         return redirect()
             ->route('employee-competencies.index')
@@ -240,6 +269,7 @@ return view(
 
     /**
      * Delete employee competency record.
+     * Historical snapshots are retained.
      */
     public function destroy(
         EmployeeCompetency $employeeCompetency
@@ -249,5 +279,41 @@ return view(
         return redirect()
             ->route('employee-competencies.index')
             ->with('success', 'Data kompetensi karyawan berhasil dihapus.');
+    }
+
+    /**
+     * Store an immutable snapshot of the current assessment.
+     */
+    private function recordAssessmentHistory(
+        EmployeeCompetency $record
+    ): void {
+        $record->load([
+            'employee:id,name',
+            'competency:id,code,name,category',
+            'assessor:id,name',
+        ]);
+
+        EmployeeCompetencyAssessment::create([
+            'employee_competency_id' => $record->id,
+
+            'user_id' => $record->user_id,
+            'competency_id' => $record->competency_id,
+            'assessed_by' => $record->assessed_by,
+
+            'employee_name' => $record->employee?->name ?? 'Unknown',
+            'assessor_name' => $record->assessor?->name ?? 'Unknown',
+
+            'competency_code' => $record->competency?->code ?? '-',
+            'competency_name' => $record->competency?->name ?? 'Unknown',
+            'competency_category' => $record->competency?->category,
+
+            'current_level' => $record->current_level,
+            'target_level' => $record->target_level,
+
+            'assessed_at' => $record->assessed_at->toDateString(),
+
+            'evidence' => $record->evidence,
+            'notes' => $record->notes,
+        ]);
     }
 }

@@ -185,6 +185,83 @@
 
     </div>
 
+    {{-- =====================================================
+     ASSESSMENT COVERAGE BY CATEGORY
+====================================================== --}}
+
+<div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+    <div class="border-b border-slate-200 px-6 py-5">
+        <h2 class="font-bold text-slate-800">
+            Assessment Coverage by Category
+        </h2>
+
+        <p class="mt-1 text-sm text-slate-500">
+            Perbandingan progres assessment pada setiap kategori kompetensi.
+        </p>
+    </div>
+
+    @if($coverageByCategory->isEmpty())
+
+        <div class="px-6 py-10 text-center">
+            <p class="font-semibold text-slate-800">
+                No Assessment Data
+            </p>
+
+            <p class="mt-1 text-sm text-slate-500">
+                Belum ada competency yang ditetapkan untuk karyawan aktif.
+            </p>
+        </div>
+
+    @else
+
+        <div class="space-y-6 p-6">
+
+            @foreach($coverageByCategory as $category)
+
+                <div>
+                    <div class="flex flex-col gap-2 sm:flex-row
+                                sm:items-center sm:justify-between">
+
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">
+                                {{ $category->category }}
+                            </p>
+
+                            <p class="mt-1 text-xs text-slate-500">
+                                {{ number_format($category->assessed_count) }}
+                                assessed /
+                                {{ number_format($category->total_assignments) }}
+                                assigned
+                            </p>
+                        </div>
+
+                        <p class="text-sm font-bold text-blue-600">
+                            {{ $category->assessment_rate }}%
+                        </p>
+
+                    </div>
+
+                    <div class="mt-3 h-2.5 overflow-hidden rounded-full
+                                bg-slate-100">
+
+                        <div
+                            class="h-full rounded-full bg-blue-600
+                                   transition-all duration-500"
+                            style="width: {{ min(100, max(0, $category->assessment_rate)) }}%"
+                        ></div>
+
+                    </div>
+                </div>
+
+            @endforeach
+
+        </div>
+
+    @endif
+
+</div>
+
 
     {{-- =====================================================
          GAP BY CATEGORY
@@ -267,6 +344,133 @@
         @endif
 
     </div>
+
+    {{-- =====================================================
+     DEVELOPMENT PRIORITY BY COMPETENCY
+====================================================== --}}
+
+<div class="overflow-hidden rounded-2xl border border-slate-200
+            bg-white shadow-sm">
+
+    <div class="border-b border-slate-200 px-6 py-5">
+        <h2 class="font-bold text-slate-800">
+            Most Affected Competencies
+        </h2>
+
+        <p class="mt-1 text-sm text-slate-500">
+            Kompetensi dengan akumulasi gap dan jumlah karyawan terdampak terbesar.
+        </p>
+    </div>
+
+    @if($priorityByCompetency->isEmpty())
+
+        <div class="px-6 py-12 text-center">
+            <p class="font-semibold text-slate-800">
+                No Development Priority
+            </p>
+
+            <p class="mt-1 text-sm text-slate-500">
+                Belum ada competency yang berada di bawah target.
+            </p>
+        </div>
+
+    @else
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200">
+
+                <thead class="bg-slate-50">
+                    <tr>
+                        <th class="px-5 py-3 text-left text-xs font-semibold uppercase text-slate-500">
+                            Competency
+                        </th>
+
+                        <th class="px-5 py-3 text-right text-xs font-semibold uppercase text-slate-500">
+                            Employees
+                        </th>
+
+                        <th class="px-5 py-3 text-right text-xs font-semibold uppercase text-slate-500">
+                            Records
+                        </th>
+
+                        <th class="px-5 py-3 text-right text-xs font-semibold uppercase text-slate-500">
+                            Average Gap
+                        </th>
+
+                        <th class="px-5 py-3 text-right text-xs font-semibold uppercase text-slate-500">
+                            Total Gap
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y divide-slate-100">
+
+                    @foreach($priorityByCompetency as $priority)
+
+                        @php
+                            $percentage = $totalGapLevels > 0
+                                ? ($priority->total_gap / $totalGapLevels) * 100
+                                : 0;
+                        @endphp
+
+                        <tr class="hover:bg-slate-50">
+
+                            <td class="px-5 py-4">
+                                <p class="text-sm font-semibold text-slate-800">
+                                    {{ $priority->name }}
+                                </p>
+
+                                <p class="mt-1 text-xs text-slate-500">
+                                    {{ $priority->code }}
+                                    · {{ $priority->category }}
+                                </p>
+
+                                <div class="mt-3 h-2 w-full max-w-xs
+                                            overflow-hidden rounded-full bg-slate-100">
+                                    <div
+                                        class="h-full rounded-full bg-amber-500"
+                                        style="width: {{ min(100, max(0, $percentage)) }}%"
+                                    ></div>
+                                </div>
+
+                                <p class="mt-1 text-xs text-slate-400">
+                                    {{ number_format($percentage, 1) }}% of total gap
+                                </p>
+                            </td>
+
+                            <td class="whitespace-nowrap px-5 py-4 text-right
+                                       text-sm font-semibold text-slate-700">
+                                {{ number_format($priority->affected_employees) }}
+                            </td>
+
+                            <td class="whitespace-nowrap px-5 py-4 text-right
+                                       text-sm text-slate-600">
+                                {{ number_format($priority->affected_records) }}
+                            </td>
+
+                            <td class="whitespace-nowrap px-5 py-4 text-right
+                                       text-sm text-slate-600">
+                                {{ number_format($priority->average_gap, 1) }}
+                            </td>
+
+                            <td class="whitespace-nowrap px-5 py-4 text-right">
+                                <span class="font-bold text-amber-700">
+                                    {{ number_format($priority->total_gap) }}
+                                </span>
+                            </td>
+
+                        </tr>
+
+                    @endforeach
+
+                </tbody>
+
+            </table>
+        </div>
+
+    @endif
+
+</div>
 
 
     {{-- =====================================================

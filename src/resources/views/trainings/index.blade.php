@@ -280,7 +280,7 @@
 
                                 <td class="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
                                     <span class="font-semibold text-slate-800">
-                                        {{ $training->participants_count }}
+                                        {{ $training->active_participants_count }}
                                     </span>
                                     <span class="text-slate-400">
                                         / {{ $training->quota ?? '∞' }}

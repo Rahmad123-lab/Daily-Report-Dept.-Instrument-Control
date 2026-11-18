@@ -142,22 +142,35 @@ class CompetencyController extends Controller
     /**
      * Delete competency if it is not assigned.
      */
-    public function destroy(
-        Competency $competency
-    ): RedirectResponse {
-        if ($competency->employeeCompetencies()->exists()) {
-            return back()->with(
-                'error',
-                'Kompetensi masih digunakan oleh karyawan. Nonaktifkan kompetensi tersebut sebagai gantinya.'
-            );
-        }
+    /**
+ * Delete competency only when it has no employee or training records.
+ */
+public function destroy(
+    Competency $competency
+): RedirectResponse {
+    $hasEmployeeRecords = $competency
+        ->employeeCompetencies()
+        ->exists();
 
-        $competency->delete();
+    $hasTrainingMappings = $competency
+        ->trainings()
+        ->exists();
 
-        return redirect()
-            ->route('competencies.index')
-            ->with('success', 'Kompetensi berhasil dihapus.');
+    if ($hasEmployeeRecords || $hasTrainingMappings) {
+        return back()->with(
+            'error',
+            'Kompetensi masih digunakan oleh karyawan atau terhubung '
+            . 'dengan program training. Nonaktifkan kompetensi tersebut '
+            . 'sebagai gantinya.'
+        );
     }
+
+    $competency->delete();
+
+    return redirect()
+        ->route('competencies.index')
+        ->with('success', 'Kompetensi berhasil dihapus.');
+}
 
     /**
      * Shared validation rules.

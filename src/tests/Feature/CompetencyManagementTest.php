@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Competency;
 use App\Models\EmployeeCompetency;
+use App\Models\EmployeeCompetencyAssessment;
+use App\Models\Training;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -106,7 +108,35 @@ class CompetencyManagementTest extends TestCase
             ->get(route('competencies.show', $competency))
             ->assertNotFound();
     }
+public function test_competency_linked_to_training_cannot_be_deleted(): void
+{
+    $admin = $this->makeUser('admin');
+    $competency = $this->makeCompetency();
 
+    $training = Training::create([
+        'title' => 'PLC Troubleshooting Training',
+        'start_date' => '2026-11-10',
+        'end_date' => '2026-11-11',
+        'status' => 'planned',
+    ]);
+
+    $training->competencies()->attach($competency->id);
+
+    $this->actingAs($admin)
+        ->from(route('competencies.index'))
+        ->delete(route('competencies.destroy', $competency))
+        ->assertRedirect(route('competencies.index'))
+        ->assertSessionHas('error');
+
+    $this->assertDatabaseHas('competencies', [
+        'id' => $competency->id,
+    ]);
+
+    $this->assertDatabaseHas('competency_training', [
+        'competency_id' => $competency->id,
+        'training_id' => $training->id,
+    ]);
+}
     /**
      * Admin can create a new competency.
      */
@@ -455,4 +485,288 @@ class CompetencyManagementTest extends TestCase
             ->assertSee('Below Target')
             ->assertSee('DCS');
     }
+
+    public function test_competency_dashboard_excludes_inactive_competencies(): void
+{
+    $admin = $this->makeUser('admin');
+    $employee = $this->makeUser();
+
+    $activeCompetency = $this->makeCompetency([
+        'code' => 'INST-ACTIVE-001',
+        'name' => 'Active PLC Competency',
+        'is_active' => true,
+    ]);
+
+    $inactiveCompetency = $this->makeCompetency([
+        'code' => 'INST-INACTIVE-001',
+        'name' => 'Inactive PLC Competency',
+        'is_active' => false,
+    ]);
+
+    $this->makeAssessment($employee, $activeCompetency, [
+        'current_level' => 2,
+        'target_level' => 4,
+    ]);
+
+    $this->makeAssessment($employee, $inactiveCompetency, [
+        'current_level' => 1,
+        'target_level' => 5,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('competencies.dashboard'))
+        ->assertOk()
+        ->assertViewHas('totalAssignments', 1)
+        ->assertViewHas('assessedCount', 1)
+        ->assertViewHas('gapCount', 1)
+        ->assertViewHas('totalGapLevels', 2);
+}
+public function test_competency_dashboard_shows_assessment_coverage_by_category(): void
+{
+    $admin = $this->makeUser('admin');
+    $employee = $this->makeUser();
+
+    $assessedCompetency = $this->makeCompetency([
+        'code' => 'INST-COV-001',
+        'name' => 'PLC Troubleshooting',
+        'category' => 'Instrumentation',
+    ]);
+
+    $unassessedCompetency = $this->makeCompetency([
+        'code' => 'INST-COV-002',
+        'name' => 'DCS Troubleshooting',
+        'category' => 'Instrumentation',
+    ]);
+
+    $this->makeAssessment($employee, $assessedCompetency, [
+        'current_level' => 3,
+        'target_level' => 4,
+    ]);
+
+    $this->makeAssessment($employee, $unassessedCompetency, [
+        'current_level' => null,
+        'target_level' => 3,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('competencies.dashboard'))
+        ->assertOk()
+        ->assertViewHas('coverageByCategory', function ($categories) {
+            $category = $categories->firstWhere(
+                'category',
+                'Instrumentation'
+            );
+
+            return $category !== null
+                && (int) $category->total_assignments === 2
+                && (int) $category->assessed_count === 1
+                && (float) $category->assessment_rate === 50.0;
+        });
+}
+public function test_competency_dashboard_ranks_competencies_by_total_gap(): void
+{
+    $admin = $this->makeUser('admin');
+
+    $employeeOne = $this->makeUser();
+    $employeeTwo = $this->makeUser();
+
+    $plc = $this->makeCompetency([
+        'code' => 'INST-PLC-PRIORITY',
+        'name' => 'PLC Troubleshooting',
+    ]);
+
+    $dcs = $this->makeCompetency([
+        'code' => 'INST-DCS-PRIORITY',
+        'name' => 'DCS Troubleshooting',
+    ]);
+
+    $this->makeAssessment($employeeOne, $plc, [
+        'current_level' => 1,
+        'target_level' => 5,
+    ]);
+
+    $this->makeAssessment($employeeTwo, $plc, [
+        'current_level' => 2,
+        'target_level' => 5,
+    ]);
+
+    $this->makeAssessment($employeeOne, $dcs, [
+        'current_level' => 3,
+        'target_level' => 5,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('competencies.dashboard'))
+        ->assertOk()
+        ->assertViewHas('priorityByCompetency', function ($priorities) use ($plc, $dcs) {
+            $first = $priorities->first();
+
+            $plcPriority = $priorities->firstWhere('id', $plc->id);
+            $dcsPriority = $priorities->firstWhere('id', $dcs->id);
+
+            return $first !== null
+                && (int) $first->id === (int) $plc->id
+                && (int) $plcPriority->affected_employees === 2
+                && (int) $plcPriority->affected_records === 2
+                && (int) $plcPriority->total_gap === 7
+                && (float) $plcPriority->average_gap === 3.5
+                && (int) $dcsPriority->total_gap === 2;
+        });
+}
+    public function test_initial_assessment_creates_history_record(): void
+    {
+        $admin = $this->makeUser('admin');
+        $employee = $this->makeUser();
+        $competency = $this->makeCompetency();
+
+        $this->actingAs($admin)
+            ->post(route('employee-competencies.store'), [
+                'user_id' => $employee->id,
+                'competency_id' => $competency->id,
+                'current_level' => 2,
+                'target_level' => 4,
+                'assessed_at' => '2026-11-08',
+                'evidence' => 'Practical PLC assessment.',
+                'notes' => 'Initial assessment.',
+            ])
+            ->assertRedirect(route('employee-competencies.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('employee_competency_assessments', [
+            'user_id' => $employee->id,
+            'competency_id' => $competency->id,
+            'assessed_by' => $admin->id,
+            'employee_name' => $employee->name,
+            'assessor_name' => $admin->name,
+            'competency_code' => $competency->code,
+            'current_level' => 2,
+            'target_level' => 4,
+            'evidence' => 'Practical PLC assessment.',
+        ]);
+
+        $history = EmployeeCompetencyAssessment::query()
+            ->where('user_id', $employee->id)
+            ->where('competency_id', $competency->id)
+            ->firstOrFail();
+
+        $this->assertSame('2026-11-08', $history->assessed_at->toDateString());
+    }
+
+    public function test_updating_assessment_preserves_previous_history(): void
+    {
+        $admin = $this->makeUser('admin');
+        $employee = $this->makeUser();
+        $competency = $this->makeCompetency();
+
+        $this->actingAs($admin)
+            ->post(route('employee-competencies.store'), [
+                'user_id' => $employee->id,
+                'competency_id' => $competency->id,
+                'current_level' => 2,
+                'target_level' => 4,
+                'assessed_at' => '2026-11-08',
+                'evidence' => 'Initial evidence.',
+                'notes' => 'Initial assessment.',
+            ])
+            ->assertRedirect(route('employee-competencies.index'))
+            ->assertSessionHas('success');
+
+        $record = EmployeeCompetency::query()
+            ->where('user_id', $employee->id)
+            ->where('competency_id', $competency->id)
+            ->firstOrFail();
+
+        $this->actingAs($admin)
+            ->put(route('employee-competencies.update', $record), [
+                'current_level' => 3,
+                'target_level' => 4,
+                'assessed_at' => '2026-12-08',
+                'evidence' => 'Updated evidence.',
+                'notes' => 'Improved competency.',
+            ])
+            ->assertRedirect(route('employee-competencies.index'))
+            ->assertSessionHas('success');
+
+        $history = EmployeeCompetencyAssessment::query()
+            ->where('employee_competency_id', $record->id)
+            ->orderBy('id')
+            ->get();
+
+        $this->assertCount(2, $history);
+
+        // The first assessment must remain unchanged.
+        $this->assertSame(2, $history[0]->current_level);
+        $this->assertSame('2026-11-08', $history[0]->assessed_at->toDateString());
+        $this->assertSame('Initial evidence.', $history[0]->evidence);
+
+        // The update must create a second history entry.
+        $this->assertSame(3, $history[1]->current_level);
+        $this->assertSame('2026-12-08', $history[1]->assessed_at->toDateString());
+        $this->assertSame('Updated evidence.', $history[1]->evidence);
+
+        // The current assessment row should contain the latest values.
+        $this->assertDatabaseHas('employee_competencies', [
+            'id' => $record->id,
+            'current_level' => 3,
+            'target_level' => 4,
+        ]);
+    }
+
+    
+public function test_backfill_creates_history_and_does_not_duplicate_records(): void
+{
+    $admin = $this->makeUser('admin');
+    $employee = $this->makeUser();
+    $competency = $this->makeCompetency();
+
+    $record = $this->makeAssessment($employee, $competency, [
+        'assessed_by' => $admin->id,
+        'assessed_at' => '2026-10-30',
+        'current_level' => 2,
+        'target_level' => 4,
+    ]);
+
+    // First execution creates the baseline history.
+    $this->artisan('competencies:backfill-assessment-history')
+        ->assertExitCode(0);
+
+    $this->assertDatabaseCount('employee_competency_assessments', 1);
+
+    $this->assertDatabaseHas('employee_competency_assessments', [
+        'employee_competency_id' => $record->id,
+        'user_id' => $employee->id,
+        'competency_id' => $competency->id,
+        'assessed_by' => $admin->id,
+        'employee_name' => $employee->name,
+        'assessor_name' => $admin->name,
+        'competency_code' => $competency->code,
+        'current_level' => 2,
+        'target_level' => 4,
+    ]);
+
+    // Second execution must not create a duplicate.
+    $this->artisan('competencies:backfill-assessment-history')
+        ->assertExitCode(0);
+
+    $this->assertDatabaseCount('employee_competency_assessments', 1);
+}
+
+public function test_backfill_skips_unassessed_competencies(): void
+{
+    $employee = $this->makeUser();
+    $competency = $this->makeCompetency();
+
+    $this->makeAssessment($employee, $competency, [
+        'current_level' => null,
+        'target_level' => 3,
+        'assessed_by' => null,
+        'assessed_at' => null,
+    ]);
+
+    $this->artisan('competencies:backfill-assessment-history')
+        ->assertExitCode(0);
+
+    $this->assertDatabaseCount('employee_competency_assessments', 0);
+}
+
 }

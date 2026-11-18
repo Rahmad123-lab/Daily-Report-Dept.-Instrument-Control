@@ -339,16 +339,42 @@ public function test_non_admin_cannot_delete_training(): void
     ]);
 }
 
-public function test_deleting_training_removes_its_participants(): void
+public function test_admin_cannot_delete_training_with_participant_history(): void
 {
     $admin = $this->makeUser('admin');
     $training = $this->makeTraining();
-    $participantUser = $this->makeUser();
+    $employee = $this->makeUser();
 
     $participant = $this->makeParticipant(
         $training,
-        $participantUser
+        $employee,
+        [
+            'registration_status' => 'approved',
+            'attendance_status' => 'present',
+        ]
     );
+
+    $this->actingAs($admin)
+        ->from(route('trainings.index'))
+        ->delete(route('trainings.destroy', $training))
+        ->assertRedirect(route('trainings.index'))
+        ->assertSessionHas('error');
+
+    $this->assertDatabaseHas('trainings', [
+        'id' => $training->id,
+    ]);
+
+    $this->assertDatabaseHas('training_participants', [
+        'id' => $participant->id,
+        'training_id' => $training->id,
+        'attendance_status' => 'present',
+    ]);
+}
+
+public function test_admin_can_delete_training_without_participant_history(): void
+{
+    $admin = $this->makeUser('admin');
+    $training = $this->makeTraining();
 
     $this->actingAs($admin)
         ->delete(route('trainings.destroy', $training))
@@ -357,10 +383,6 @@ public function test_deleting_training_removes_its_participants(): void
 
     $this->assertDatabaseMissing('trainings', [
         'id' => $training->id,
-    ]);
-
-    $this->assertDatabaseMissing('training_participants', [
-        'id' => $participant->id,
     ]);
 }
 
@@ -568,6 +590,94 @@ public function test_existing_inactive_competency_mapping_is_preserved_on_update
         'training_id' => $training->id,
         'competency_id' => $competency->id,
     ]);
+}
+
+public function test_training_index_counts_only_active_participants(): void
+{
+    $admin = $this->makeUser('admin');
+    $training = $this->makeTraining(['quota' => 10]);
+
+    $this->makeParticipant($training, $this->makeUser(), [
+        'registration_status' => 'registered',
+    ]);
+
+    $this->makeParticipant($training, $this->makeUser(), [
+        'registration_status' => 'approved',
+    ]);
+
+    $this->makeParticipant($training, $this->makeUser(), [
+        'registration_status' => 'rejected',
+    ]);
+
+    $this->makeParticipant($training, $this->makeUser(), [
+        'registration_status' => 'cancelled',
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('trainings.index'))
+        ->assertOk()
+        ->assertViewHas('trainings', function ($trainings) use ($training) {
+            $record = $trainings->getCollection()
+                ->firstWhere('id', $training->id);
+
+            return $record !== null
+                && (int) $record->active_participants_count === 2;
+        });
+}
+public function test_training_detail_counts_only_active_participants(): void
+{
+    $admin = $this->makeUser('admin');
+    $training = $this->makeTraining();
+
+    $this->makeParticipant($training, $this->makeUser(), [
+        'registration_status' => 'registered',
+    ]);
+
+    $this->makeParticipant($training, $this->makeUser(), [
+        'registration_status' => 'approved',
+    ]);
+
+    $this->makeParticipant($training, $this->makeUser(), [
+        'registration_status' => 'rejected',
+    ]);
+
+    $this->makeParticipant($training, $this->makeUser(), [
+        'registration_status' => 'cancelled',
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('trainings.show', $training))
+        ->assertOk()
+        ->assertViewHas('training', function ($record) {
+            return (int) $record->active_participants_count === 2;
+        });
+}
+public function test_non_admin_training_detail_shows_active_count_and_only_own_registration(): void
+{
+    $user = $this->makeUser();
+    $training = $this->makeTraining();
+
+    $this->makeParticipant($training, $user, [
+        'registration_status' => 'registered',
+    ]);
+
+    $this->makeParticipant($training, $this->makeUser(), [
+        'registration_status' => 'approved',
+    ]);
+
+    $this->makeParticipant($training, $this->makeUser(), [
+        'registration_status' => 'rejected',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('trainings.show', $training))
+        ->assertOk()
+        ->assertViewHas('training', function ($record) use ($user) {
+            return (int) $record->active_participants_count === 2
+                && $record->participants->count() === 1
+                && (int) $record->participants->first()->user_id
+                    === (int) $user->id;
+        });
 }
 
 }

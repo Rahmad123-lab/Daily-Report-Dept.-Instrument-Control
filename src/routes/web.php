@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\DailyReportItemController;
 use App\Http\Controllers\DailyReportExportController;
+use App\Http\Controllers\DailyReportAttendanceController;
 use App\Http\Controllers\EquipmentController;
 use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\MaintenanceHistoryController;
@@ -20,7 +21,10 @@ use App\Http\Controllers\TrainingRecommendationController;
 use App\Http\Controllers\CompetencyController;
 use App\Http\Controllers\EmployeeCompetencyController;
 use App\Http\Controllers\CompetencyDashboardController;
-
+use App\Http\Controllers\EmployeeCompetencyAssessmentHistoryController;
+use App\Http\Controllers\TrainingCompetencyEvaluationController;
+use App\Http\Controllers\TrainingEvaluationReportController;
+use App\Http\Controllers\TrainingEvaluationReportExportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -127,7 +131,6 @@ Route::middleware(['auth', 'active', 'role:admin'])
 
 Route::middleware(['auth', 'active'])->group(function () {
 
-
     /*
     |--------------------------------------------------------------------------
     | Profile Management
@@ -227,31 +230,32 @@ Route::middleware(['auth', 'active'])->group(function () {
     )->whereNumber('daily_report')
      ->name('daily-reports.export.pdf');
 
-     /*
-|--------------------------------------------------------------------------
-| Daily Report Employee Attendance
-|--------------------------------------------------------------------------
-*/
+
+    /*
+    |--------------------------------------------------------------------------
+    | Daily Report Employee Attendance
+    |--------------------------------------------------------------------------
+    */
 
     Route::post(
         '/daily-reports/{dailyReport}/attendances',
-        [\App\Http\Controllers\DailyReportAttendanceController::class, 'store']
+        [DailyReportAttendanceController::class, 'store']
     )->whereNumber('dailyReport')
-    ->name('daily-reports.attendances.store');
+     ->name('daily-reports.attendances.store');
 
     Route::put(
         '/daily-reports/{dailyReport}/attendances/{attendance}',
-        [\App\Http\Controllers\DailyReportAttendanceController::class, 'update']
+        [DailyReportAttendanceController::class, 'update']
     )->whereNumber('dailyReport')
-    ->whereNumber('attendance')
-    ->name('daily-reports.attendances.update');
+     ->whereNumber('attendance')
+     ->name('daily-reports.attendances.update');
 
     Route::delete(
         '/daily-reports/{dailyReport}/attendances/{attendance}',
-        [\App\Http\Controllers\DailyReportAttendanceController::class, 'destroy']
+        [DailyReportAttendanceController::class, 'destroy']
     )->whereNumber('dailyReport')
-    ->whereNumber('attendance')
-    ->name('daily-reports.attendances.destroy');
+     ->whereNumber('attendance')
+     ->name('daily-reports.attendances.destroy');
 
 
     /*
@@ -306,10 +310,6 @@ Route::middleware(['auth', 'active'])->group(function () {
     |--------------------------------------------------------------------------
     | Maintenance PDF Preview & Export
     |--------------------------------------------------------------------------
-    |
-    | All three routes are protected by auth and active middleware.
-    | The controller explicitly verifies equipment/history ownership.
-    |
     */
 
     Route::get(
@@ -350,11 +350,12 @@ Route::middleware(['auth', 'active'])->group(function () {
 | - Create and manage training
 | - Approve participants
 | - Manage attendance
+| - Evaluate participant competency
+| - View training evaluation report
 |
 */
 
 Route::middleware(['auth', 'active'])->group(function () {
-
 
     /*
     |--------------------------------------------------------------------------
@@ -395,6 +396,12 @@ Route::middleware(['auth', 'active'])->group(function () {
 
     Route::middleware('role:admin')->group(function () {
 
+        /*
+        |--------------------------------------------------------------------------
+        | Create Training
+        |--------------------------------------------------------------------------
+        */
+
         Route::get('/trainings/create', [
             TrainingController::class,
             'create',
@@ -422,6 +429,57 @@ Route::middleware(['auth', 'active'])->group(function () {
             'destroy',
         ])->whereNumber('training')
           ->name('trainings.destroy');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Training Evaluation Report
+        |--------------------------------------------------------------------------
+        |
+        | URL:
+        | /trainings/{training}/evaluations
+        |
+        | Route name:
+        | trainings.evaluations.index
+        |
+        */
+
+        Route::get(
+            '/trainings/{training}/evaluations',
+            [TrainingEvaluationReportController::class, 'index']
+        )->whereNumber('training')
+         ->name('trainings.evaluations.index');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Training Evaluation PDF Export
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/trainings/{training}/evaluations/export/pdf',
+            [TrainingEvaluationReportExportController::class, 'export']
+        )->whereNumber('training')
+        ->name('trainings.evaluations.export.pdf');
+        /*
+        |--------------------------------------------------------------------------
+        | Training Competency Evaluation
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/trainings/{training}/participants/{participant}/evaluations/create',
+            [TrainingCompetencyEvaluationController::class, 'create']
+        )->whereNumber('training')
+         ->whereNumber('participant')
+         ->name('trainings.participants.evaluations.create');
+
+        Route::post(
+            '/trainings/{training}/participants/{participant}/evaluations',
+            [TrainingCompetencyEvaluationController::class, 'store']
+        )->whereNumber('training')
+         ->whereNumber('participant')
+         ->name('trainings.participants.evaluations.store');
 
 
         /*
@@ -507,7 +565,6 @@ Route::middleware(['auth', 'active'])->group(function () {
 
 Route::middleware(['auth', 'active'])->group(function () {
 
-
     /*
     |--------------------------------------------------------------------------
     | Competency Master List
@@ -518,6 +575,18 @@ Route::middleware(['auth', 'active'])->group(function () {
         CompetencyController::class,
         'index',
     ])->name('competencies.index');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Employee Competency Assessment History
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/employee-competencies/history', [
+        EmployeeCompetencyAssessmentHistoryController::class,
+        'index',
+    ])->name('employee-competencies.history');
 
 
     /*
@@ -539,7 +608,6 @@ Route::middleware(['auth', 'active'])->group(function () {
     */
 
     Route::middleware('role:admin')->group(function () {
-
 
         /*
         |--------------------------------------------------------------------------
