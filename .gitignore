@@ -1,0 +1,25 @@
+﻿# Root Composer dependencies
+/vendor/
+
+# Root Node dependencies
+/node_modules/
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+.fleet/
+.nova/
+
+# Operating system
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
