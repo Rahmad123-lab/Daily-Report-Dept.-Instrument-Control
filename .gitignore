@@ -23,3 +23,29 @@ Thumbs.db
 *.log
 *.tmp
 *.bak
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Secrets and credentials
+auth.json
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Laravel runtime
+/vendor
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/logs/*
+/bootstrap/cache/*.php
+
+# IDE
+.idea
+.vscode
