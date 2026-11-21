@@ -49,3 +49,6 @@ auth.json
 # IDE
 .idea
 .vscode
+
+# Allow TiDB Cloud CA certificate
+!docker/certs/tidb-ca.pem

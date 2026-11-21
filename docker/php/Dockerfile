@@ -46,6 +46,9 @@ WORKDIR /var/www
 # Copy Laravel application
 COPY src/ ./
 
+# Copy TiDB Cloud CA certificate
+COPY docker/certs/tidb-ca.pem /etc/ssl/certs/tidb-ca.pem
+
 # Install PHP dependencies
 RUN composer install \
     --no-dev \
